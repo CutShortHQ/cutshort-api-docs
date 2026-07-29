@@ -1,0 +1,73 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "name": "Cutshort API",
+  "description": "Search India's tech talent database programmatically.",
+  "theme": "mint",
+  "colors": {
+    "primary": "#2D6A4F",
+    "light": "#40916C",
+    "dark": "#1B4332"
+  },
+  "background": {
+    "decoration": "grid",
+    "color": {
+      "light": "#FAFAFA",
+      "dark": "#0A0A0A"
+    }
+  },
+  "api": {
+    "openapi": "openapi/public-api-v1.json",
+    "playground": {
+      "display": "interactive"
+    },
+    "examples": {
+      "languages": ["curl", "python", "javascript"],
+      "defaults": "required"
+    }
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting started",
+            "pages": ["introduction", "authentication", "quickstart"]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/search-candidates",
+              "guides/get-candidate-details",
+              "guides/job-applications",
+              "guides/profile-signals",
+              "guides/rate-limits",
+              "guides/post-a-job"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "openapi": "openapi/public-api-v1.json"
+      }
+    ]
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Cutshort",
+        "href": "https://cutshort.io"
+      },
+      {
+        "label": "Request API access",
+        "href": "https://cutshort.io/profile/hiring-settings/integrations"
+      }
+    ]
+  },
+  "footer": {
+    "socials": {
+      "website": "https://cutshort.io"
+    }
+  }
+}

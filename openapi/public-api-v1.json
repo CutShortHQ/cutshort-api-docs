@@ -1,0 +1,631 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Cutshort Public API v1",
+    "version": "1.0.0",
+    "description": "Programmatic access to Cutshort for integrations and automation. All endpoints require `Authorization: Bearer cs_live_<key>` unless noted otherwise.\n\n**Launch endpoints:** search talent, job applications pipeline, candidate unlock, usage, post a job."
+  },
+  "servers": [
+    { "url": "https://cutshort.io/api/v1", "description": "Production" }
+  ],
+  "security": [{ "ApiKeyAuth": [] }],
+  "tags": [
+    { "name": "Search", "description": "Talent database search" },
+    { "name": "Candidates", "description": "Candidate detail and unlock (contact info)" },
+    { "name": "Usage", "description": "Billing period usage and quotas" },
+    { "name": "Jobs", "description": "Job posting and application pipeline" },
+    { "name": "Applications", "description": "Applications for a job" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Workspace-scoped API key. Prefix: `cs_live_`. Generate from Cutshort → Settings → Integrations → API Key (after your workspace is provisioned for API access)."
+      }
+    },
+    "parameters": {
+      "page": {
+        "name": "page",
+        "in": "query",
+        "schema": { "type": "integer", "default": 1, "minimum": 1 }
+      },
+      "pageSize": {
+        "name": "pageSize",
+        "in": "query",
+        "schema": { "type": "integer", "default": 10, "minimum": 1, "maximum": 25 }
+      },
+      "pageSizeLimited": {
+        "name": "pageSize",
+        "in": "query",
+        "schema": { "type": "integer", "default": 10, "minimum": 1, "maximum": 20 },
+        "description": "Results per page (default 10, max 20)"
+      }
+    },
+    "schemas": {
+      "ApiError": {
+        "type": "object",
+        "properties": {
+          "error_code": { "type": "string" },
+          "error_description": { "type": "string" }
+        }
+      },
+      "ProfileSignal": {
+        "type": "object",
+        "nullable": true,
+        "properties": {
+          "score": { "type": "number" },
+          "level": { "type": "string" },
+          "reason": { "type": "string", "nullable": true }
+        }
+      },
+      "IndustryTag": {
+        "type": "object",
+        "properties": {
+          "tag": { "type": "string" },
+          "label": { "type": "string" },
+          "score": { "type": "number" },
+          "reason": { "type": "string", "nullable": true }
+        }
+      },
+      "ProfileSignals": {
+        "type": "object",
+        "description": "AI-evaluated profile signals. Each scalar field is { score, level, reason } or null (not evaluated — not a negative signal).",
+        "properties": {
+          "educationPedigree": { "$ref": "#/components/schemas/ProfileSignal" },
+          "workQuality": { "$ref": "#/components/schemas/ProfileSignal" },
+          "careerGrowth": { "$ref": "#/components/schemas/ProfileSignal" },
+          "startupExperience": { "$ref": "#/components/schemas/ProfileSignal" },
+          "entrepreneurship": { "$ref": "#/components/schemas/ProfileSignal" },
+          "jobTenure": { "$ref": "#/components/schemas/ProfileSignal" },
+          "industryTags": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/IndustryTag" }
+          }
+        }
+      },
+      "SearchCandidateHit": {
+        "type": "object",
+        "description": "Index-served search hit. No identity or contact fields on this response.",
+        "properties": {
+          "talentCardId": { "type": "string" },
+          "headline": { "type": "string" },
+          "experience": { "type": "number", "description": "Total experience in years" },
+          "locations": { "type": "array", "items": { "type": "string" } },
+          "currentLocation": { "type": "string" },
+          "currentCompany": { "type": "string" },
+          "joiningAvailability": { "type": "string" },
+          "currentSalary": { "type": "number", "description": "Current annual salary in INR" },
+          "workHistory": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Compact strings, e.g. Senior Engineer — Flipkart (2021–2024)"
+          },
+          "education": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Compact strings, e.g. B.Tech, IIT Delhi (2018)"
+          },
+          "profileSignals": { "$ref": "#/components/schemas/ProfileSignals" },
+          "redactedResumeText": {
+            "type": "string",
+            "description": "Identity-stripped resume excerpt (~4000 chars max)"
+          }
+        }
+      },
+      "SearchCandidatesResponse": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/SearchCandidateHit" }
+          },
+          "page": { "type": "integer" },
+          "pageSize": { "type": "integer", "description": "Requested page size (default 10, max 20)" },
+          "totalCount": { "type": "integer" },
+          "searchType": { "type": "string", "enum": ["structured", "ai"] }
+        }
+      },
+      "CandidateDetail": {
+        "type": "object",
+        "description": "Lock-aware candidate detail. Contact fields are null until unlocked.",
+        "properties": {
+          "talentCardId": { "type": "string" },
+          "lockStatus": { "type": "string", "enum": ["locked", "unlocked"] },
+          "displayName": { "type": "string", "description": "Real name when unlocked; pseudonymous handle when locked" },
+          "headline": { "type": "string" },
+          "email": { "type": "string", "nullable": true, "description": "Null when locked" },
+          "phone": { "type": "string", "nullable": true, "description": "Null when locked" },
+          "redactedResumeText": { "type": "string", "description": "Present when locked; identity-stripped resume excerpt" },
+          "originalResumeFileName": {
+            "type": "string",
+            "description": "Original uploaded filename (e.g. PDF). Unlocked only."
+          },
+          "originalResumeDownloadUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "Presigned S3 URL to the uploaded resume file (Download resume in UI). Unlocked only. Expires after 1 hour."
+          },
+          "profile": { "type": "object", "description": "Structured resume/profile; redacted when locked" },
+          "screeningQuestions": {
+            "type": "array",
+            "description": "Populated when unlocked and jobContext matches an application with answers"
+          },
+          "interactionsWithCutshort": { "type": "array" }
+        }
+      },
+      "UnlockCandidateRequest": {
+        "type": "object",
+        "properties": {
+          "jobId": { "type": "string", "description": "Optional job context for attribution" },
+          "threadId": { "type": "string", "description": "Optional conversation context" }
+        }
+      },
+      "UnlockCandidateResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "talentCardId": { "type": "string" },
+          "alreadyUnlocked": { "type": "boolean", "description": "True when no credit was consumed" },
+          "unlocksLeft": { "type": "integer", "nullable": true }
+        }
+      },
+      "PaginatedMeta": {
+        "type": "object",
+        "properties": {
+          "page": { "type": "integer" },
+          "pageSize": { "type": "integer" },
+          "totalCount": { "type": "integer" },
+          "totalPages": { "type": "integer" },
+          "totalCountIsCapped": { "type": "boolean", "description": "True when stage has more apps than internal fetch cap (1000)" },
+          "fetchLimit": { "type": "integer", "description": "Internal fetch cap when totalCountIsCapped is true" }
+        }
+      },
+      "JobStage": {
+        "type": "object",
+        "properties": {
+          "stageId": { "type": "string" },
+          "title": { "type": "string" },
+          "type": { "type": "string", "description": "candidates = Applications stage (default for list applications)" },
+          "order": { "type": "integer" },
+          "stagePurpose": { "type": "string", "nullable": true },
+          "applicationCount": { "type": "integer" },
+          "automations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string" },
+                "summary": { "type": "string", "nullable": true }
+              }
+            }
+          }
+        }
+      },
+      "ApplicationRelevance": {
+        "type": "object",
+        "properties": {
+          "shortlistingCriteriaScore": { "type": "number", "nullable": true },
+          "fitment": { "type": "string", "nullable": true },
+          "fitmentReason": { "type": "string", "nullable": true }
+        }
+      },
+      "ApplicationListItem": {
+        "type": "object",
+        "properties": {
+          "applicationId": { "type": "string" },
+          "jobId": { "type": "string" },
+          "stageId": { "type": "string" },
+          "stageType": { "type": "string", "nullable": true },
+          "threadId": { "type": "string", "nullable": true },
+          "talentCardId": { "type": "string" },
+          "addedToCurrentStageOn": { "type": "string", "format": "date-time", "nullable": true },
+          "lastActivityOn": { "type": "string", "format": "date-time", "nullable": true },
+          "relevance": { "$ref": "#/components/schemas/ApplicationRelevance" },
+          "candidate": { "$ref": "#/components/schemas/CandidateDetail" }
+        }
+      },
+      "ApplicationDetail": {
+        "allOf": [
+          { "$ref": "#/components/schemas/ApplicationListItem" },
+          {
+            "type": "object",
+            "properties": {
+              "profileSignals": { "$ref": "#/components/schemas/ProfileSignals" }
+            }
+          }
+        ]
+      },
+      "UsageResponse": {
+        "type": "object",
+        "properties": {
+          "workspaceId": { "type": "string" },
+          "billingPeriod": { "type": "string", "example": "2026-07" },
+          "apiUnlocks": {
+            "type": "object",
+            "description": "API profile download credits for the current billing period",
+            "properties": {
+              "used": { "type": "integer", "description": "Profile downloads via API this period" },
+              "available": { "type": "integer", "description": "Effective credits remaining (min of plan pool left and API unlock limit left)" }
+            }
+          },
+          "searches": {
+            "type": "object",
+            "properties": {
+              "structured": { "type": "integer" },
+              "ai": { "type": "integer" }
+            }
+          },
+          "subscription": {
+            "type": "object",
+            "properties": {
+              "planName": { "type": "string", "nullable": true },
+              "primeActive": { "type": "boolean" },
+              "cycleEndsOn": { "type": "string", "nullable": true },
+              "planExpiresOn": { "type": "string", "nullable": true }
+            }
+          }
+        }
+      },
+      "CreateJobRequest": {
+        "type": "object",
+        "required": ["title", "remoteType", "experienceRange", "salaryRange", "jobDescription"],
+        "properties": {
+          "title": { "type": "string", "maxLength": 80, "example": "Senior Data Engineer" },
+          "remoteType": {
+            "type": "string",
+            "enum": ["remote_only", "remote_okay", "remote_not_okay"],
+            "description": "locations required unless remote_only"
+          },
+          "locations": {
+            "type": "array",
+            "items": { "type": "string" },
+            "maxItems": 5,
+            "example": ["Bangalore", "Pune"]
+          },
+          "experienceRange": {
+            "type": "object",
+            "required": ["min", "max"],
+            "properties": { "min": { "type": "number" }, "max": { "type": "number" } }
+          },
+          "salaryRange": {
+            "type": "object",
+            "required": ["min", "max"],
+            "properties": { "min": { "type": "number" }, "max": { "type": "number" } },
+            "description": "INR per annum (2500000 = 25 LPA)"
+          },
+          "jobDescription": { "type": "string", "maxLength": 20000 },
+          "keyRequirements": {
+            "type": "array",
+            "maxItems": 8,
+            "items": {
+              "type": "object",
+              "required": ["requirement"],
+              "properties": {
+                "requirement": { "type": "string", "maxLength": 300 },
+                "importance": { "type": "string", "enum": ["must_have", "nice_to_have"], "default": "nice_to_have" }
+              }
+            }
+          }
+        }
+      },
+      "CreateJobResponse": {
+        "type": "object",
+        "properties": {
+          "jobId": { "type": "string" },
+          "publicUrl": { "type": "string", "nullable": true },
+          "status": { "type": "string", "example": "submitted_for_review" },
+          "title": { "type": "string" },
+          "estimatedReach": {
+            "type": "object",
+            "properties": {
+              "count": { "type": "integer" },
+              "warning": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Missing or invalid API key",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } }
+      },
+      "Forbidden": {
+        "description": "Insufficient scope",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } }
+      },
+      "TooManyRequests": {
+        "description": "Rate limit, search throttle, or profile download credits exhausted",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } }
+      }
+    }
+  },
+  "paths": {
+    "/search/candidates": {
+      "get": {
+        "tags": ["Search"],
+        "operationId": "searchCandidates",
+        "summary": "Search talent database",
+        "description": "Structured and/or AI/NLP talent search. Returns triage data (headline, experience, profileSignals, redacted resume). No names, email, or phone on search hits — use GET /candidates/{talentCardId} after unlock for contact info.\n\nRequires scope `search:read`. Rate limits: 10 search + 120 global requests per 60s per API key.",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": { "type": "string", "maxLength": 500 },
+            "description": "NLP / AI query. Rewritten then embedded for semantic ranking. Combine with structured filters."
+          },
+          { "name": "inresume", "in": "query", "schema": { "type": "string" }, "description": "Lucene boolean over full resume text. Preferred for skill searches." },
+          { "name": "locations", "in": "query", "schema": { "type": "string" }, "description": "Desired work locations (dash-separated, URL-encoded)" },
+          { "name": "currlocation", "in": "query", "schema": { "type": "string" }, "description": "Candidate current location" },
+          { "name": "minexp", "in": "query", "schema": { "type": "string" }, "description": "Min experience (years)" },
+          { "name": "maxexp", "in": "query", "schema": { "type": "string" }, "description": "Max experience (years)" },
+          { "name": "minsal", "in": "query", "schema": { "type": "string" }, "description": "Min current CTC (INR)" },
+          { "name": "maxsal", "in": "query", "schema": { "type": "string" }, "description": "Max current CTC (INR)" },
+          { "name": "eduPed", "in": "query", "schema": { "type": "string" }, "description": "tier1plus, tier1, tier2 (dash-separated)" },
+          { "name": "startupExp", "in": "query", "schema": { "type": "string" }, "description": "funded_startup, other_startup" },
+          { "name": "workQual", "in": "query", "schema": { "type": "string" }, "description": "high" },
+          { "name": "carGrowth", "in": "query", "schema": { "type": "string" }, "description": "fast" },
+          { "name": "activity", "in": "query", "schema": { "type": "string" }, "description": "active-3-months, active-6-months" },
+          { "$ref": "#/components/parameters/page" },
+          { "$ref": "#/components/parameters/pageSizeLimited" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SearchCandidatesResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/candidates/{talentCardId}": {
+      "get": {
+        "tags": ["Candidates"],
+        "operationId": "getCandidateDetail",
+        "summary": "Get candidate detail",
+        "description": "Lock-aware candidate detail. When `lockStatus` is `locked`, `email` and `phone` are null. After unlock, returns contact info, `profile`, and **`originalResumeDownloadUrl`** (uploaded file).\n\nRequires scope `candidates:read` (production keys). Does not consume credits — unlock does.\n\nRate limits: 30 sensitiveRead + 120 global requests per 60s.",
+        "parameters": [
+          { "name": "talentCardId", "in": "path", "required": true, "schema": { "type": "string" } },
+          {
+            "name": "resumeVersion",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["summary", "full"], "default": "summary" }
+          },
+          {
+            "name": "jobContext",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Job ID — includes screening Q&A when unlocked and candidate applied to this job"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate detail (locked or unlocked)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CandidateDetail" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/candidates/{talentCardId}/unlock": {
+      "post": {
+        "tags": ["Candidates"],
+        "operationId": "unlockCandidate",
+        "summary": "Unlock candidate (consumes profile download credit)",
+        "description": "Irreversible. Consumes one **API profile download credit** per candidate (first unlock only). Requires scope `candidates:unlock` (production keys).\n\nCheck `GET /usage` → `apiUnlocks.available` before calling. Rate limits: 30 unlock + 120 global requests per 60s.",
+        "parameters": [
+          { "name": "talentCardId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UnlockCandidateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Unlock succeeded",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UnlockCandidateResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/usage": {
+      "get": {
+        "tags": ["Usage"],
+        "operationId": "getUsage",
+        "summary": "API usage snapshot",
+        "description": "Returns search counts and API profile download credit usage for the current billing period. Check `apiUnlocks.available` before unlocking candidates. No special scope required — any valid API key.",
+        "responses": {
+          "200": {
+            "description": "Usage snapshot",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UsageResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/jobs": {
+      "post": {
+        "tags": ["Jobs"],
+        "operationId": "createJob",
+        "summary": "Post a job",
+        "description": "Creates a job with auto-derived skills, screening questionnaire, and candidate outreach. Requires scope `jobs:write`. Rate limit: 3 createJob + 120 global requests per 60s.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateJobRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Job submitted for review",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CreateJobResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/jobs/{jobId}/stages": {
+      "get": {
+        "tags": ["Jobs"],
+        "operationId": "listJobStages",
+        "summary": "List pipeline stages for a job",
+        "description": "Returns all stages with `stageId`, title, type, order, application counts, and automation summaries. Use `stageId` with `GET .../applications`. Stage `type: candidates` is the default Applications stage.\n\nRequires scope `jobs:read` (eval + production keys). Rate limit: global only.",
+        "parameters": [
+          { "name": "jobId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pipeline stages",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/JobStage" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/jobs/{jobId}/applications": {
+      "get": {
+        "tags": ["Applications"],
+        "operationId": "listJobApplications",
+        "summary": "List applications for a job",
+        "description": "Lists applications in a pipeline stage. **Default:** Applications stage (`type: candidates`), sorted by **relevance** (AI shortlisting score), excluding not-a-fit unless `includeNotAFit=true`.\n\nPass `stageId` from `GET .../stages` for other stages (Shortlisted, Rejected, etc.).\n\nRequires scope `applications:read` (eval keys). Rate limit: global only.",
+        "parameters": [
+          { "name": "jobId", "in": "path", "required": true, "schema": { "type": "string" } },
+          {
+            "name": "stageId",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Pipeline stage ID (default: Applications / type candidates)"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["relevance", "recency"], "default": "relevance" }
+          },
+          {
+            "name": "includeNotAFit",
+            "in": "query",
+            "schema": { "type": "boolean", "default": false },
+            "description": "Include AI-flagged not-a-fit applications"
+          },
+          { "$ref": "#/components/parameters/page" },
+          { "$ref": "#/components/parameters/pageSizeLimited" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated application list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/PaginatedMeta" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "results": {
+                          "type": "array",
+                          "items": { "$ref": "#/components/schemas/ApplicationListItem" }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/applications/{applicationId}": {
+      "get": {
+        "tags": ["Applications"],
+        "operationId": "getApplicationDetail",
+        "summary": "Get application detail",
+        "description": "Full application detail with `profileSignals`, resume text, and nested `candidate`. Eval keys can use this without unlock for triage.\n\nRequires scope `applications:read`. Rate limits: 30 sensitiveRead + 120 global req / 60s.",
+        "parameters": [
+          { "name": "applicationId", "in": "path", "required": true, "schema": { "type": "string" } },
+          {
+            "name": "resumeVersion",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["summary", "full"], "default": "summary" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Application detail",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApplicationDetail" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    }
+  }
+}

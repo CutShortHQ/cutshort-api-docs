@@ -1,0 +1,141 @@
+---
+title: Quickstart
+description: Your first talent search in two minutes
+---
+
+<Note>
+  You need an API key first. Approved employers can generate one under **Settings → Integrations → API Key** — start with **Eval access**. See [Getting API access](/introduction#getting-api-access).
+</Note>
+
+## 1. Generate an API key
+
+1. Open **Settings → Integrations → API Key**
+2. Select **Eval access** (read-only) — available to all approved employers
+3. Click **Generate API key**
+4. Copy the `cs_live_…` value from the confirmation modal
+
+Need **Production access** (all scopes)? Your workspace must have production API enabled — email [hello@cutshort.io](mailto:hello@cutshort.io?subject=Cutshort%20API%20production%20access%20request), then choose **Production access** when generating a key.
+
+## 2. Search candidates
+
+<CodeGroup>
+
+```bash curl
+curl -s -G "https://cutshort.io/api/v1/search/candidates" \
+  -H "Authorization: Bearer cs_live_YOUR_KEY" \
+  --data-urlencode "q=senior backend engineer python django" \
+  --data-urlencode "minexp=4" \
+  --data-urlencode "maxexp=10" \
+  --data-urlencode "locations=Bengaluru+%28Bangalore%29" \
+  --data-urlencode "page=1"
+```
+
+```python Python
+import requests
+
+API_KEY = "cs_live_YOUR_KEY"
+params = {
+    "q": "senior backend engineer python django",
+    "minexp": "4",
+    "maxexp": "10",
+    "locations": "Bengaluru (Bangalore)",
+    "page": 1,
+}
+
+resp = requests.get(
+    "https://cutshort.io/api/v1/search/candidates",
+    headers={"Authorization": f"Bearer {API_KEY}"},
+    params=params,
+    timeout=60,
+)
+resp.raise_for_status()
+data = resp.json()
+print(f"Found {data['totalCount']} matches, showing {len(data['results'])} on page 1")
+for hit in data["results"]:
+    print(hit["headline"], hit["experience"], "yrs")
+```
+
+```javascript JavaScript
+const params = new URLSearchParams({
+  q: "senior backend engineer python django",
+  minexp: "4",
+  maxexp: "10",
+  locations: "Bengaluru (Bangalore)",
+  page: "1",
+});
+
+const res = await fetch(
+  `https://cutshort.io/api/v1/search/candidates?${params}`,
+  { headers: { Authorization: "Bearer cs_live_YOUR_KEY" } }
+);
+const data = await res.json();
+console.log(data.totalCount, data.results.length);
+```
+
+</CodeGroup>
+
+## 3. Read the response
+
+```json
+{
+  "results": [
+    {
+      "talentCardId": "…",
+      "headline": "Senior Backend Engineer · Python · Django",
+      "experience": 6,
+      "currentSalary": 2800000,
+      "profileSignals": {
+        "educationPedigree": { "score": 3, "level": "tier1plus", "reason": "…" },
+        "workQuality": { "score": 3, "level": "high", "reason": "…" }
+      },
+      "redactedResumeText": "…"
+    }
+  ],
+  "page": 1,
+  "pageSize": 10,
+  "totalCount": 847,
+  "searchType": "ai"
+}
+```
+
+<Note>
+  `pageSize` defaults to **10** and accepts up to **20** on search and applications list endpoints.
+</Note>
+
+## 4. Check usage
+
+```bash
+curl -s "https://cutshort.io/api/v1/usage" \
+  -H "Authorization: Bearer cs_live_YOUR_KEY"
+```
+
+Returns `searches.structured`, `searches.ai`, `apiUnlocks` (profile download credits), and subscription metadata for the current billing period.
+
+## 5. Get contact info (production keys)
+
+Eval keys can search but cannot unlock. With a **production key**, after shortlisting a candidate from search:
+
+```bash
+# Check profile download credits
+curl -s "https://cutshort.io/api/v1/usage" \
+  -H "Authorization: Bearer cs_live_PROD_KEY"
+
+# Unlock (1 credit per candidate)
+curl -s -X POST "https://cutshort.io/api/v1/candidates/TALENT_CARD_ID/unlock" \
+  -H "Authorization: Bearer cs_live_PROD_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+
+# Fetch email and phone
+curl -s "https://cutshort.io/api/v1/candidates/TALENT_CARD_ID" \
+  -H "Authorization: Bearer cs_live_PROD_KEY"
+```
+
+See [Get candidate details](/guides/get-candidate-details) for the full unlock flow.
+
+## Next
+
+- [Search candidates guide](/guides/search-candidates) — filters, `inresume`, location encoding
+- [Get candidate details](/guides/get-candidate-details) — contact info and profile download credits
+- [Profile signals](/guides/profile-signals) — interpret `profileSignals` on each hit
+- [Rate limits](/guides/rate-limits) — burst caps and error handling

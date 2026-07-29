@@ -1,0 +1,89 @@
+---
+title: Post a job
+description: Create a job with auto-configured pipeline and outreach
+---
+
+<Note>
+  Requires the `jobs:write` scope on your API key. If you receive `insufficient_scope`, contact Cutshort to adjust your workspace's API provisioning.
+</Note>
+
+`POST /jobs` creates a fully configured job from minimal input. Cutshort derives skills and tags, attaches a screening questionnaire, and enables auto-outreach to matching candidates.
+
+## Request
+
+```json
+{
+  "title": "Senior Data Engineer",
+  "remoteType": "remote_okay",
+  "locations": ["Bangalore", "Pune"],
+  "experienceRange": { "min": 4, "max": 8 },
+  "salaryRange": { "min": 2500000, "max": 4500000 },
+  "jobDescription": "Full JD text…",
+  "keyRequirements": [
+    {
+      "requirement": "Must have worked primarily on data engineering, not general backend",
+      "importance": "must_have"
+    },
+    {
+      "requirement": "Early-stage startup experience",
+      "importance": "nice_to_have"
+    }
+  ]
+}
+```
+
+### Fields
+
+| Field | Required | Notes |
+| --- | --- | --- |
+| `title` | Yes | Max 80 characters |
+| `remoteType` | Yes | `remote_only`, `remote_okay`, or `remote_not_okay` |
+| `locations` | If not remote-only | Plain city names — canonicalized server-side (max 5) |
+| `experienceRange` | Yes | `{ min, max }` in years |
+| `salaryRange` | Yes | INR per annum (`2500000` = ₹25 LPA) |
+| `jobDescription` | Yes | Max 20,000 characters |
+| `keyRequirements` | No | Max 8 items; max **3** `must_have` |
+
+### `keyRequirements` rules
+
+- Default importance is `nice_to_have`
+- Use `must_have` only for outright-rejection criteria (max 3)
+- Extras beyond 3 `must_have` are **downgraded** to `nice_to_have` in the response (`downgradedFromMustHave: true`)
+- Over-tight must-haves shrink outreach reach to zero — prefer `nice_to_have` for preferences
+
+Experience range and (for non-remote roles) location criteria are added automatically — do not duplicate them in `keyRequirements`.
+
+## Response
+
+```json
+{
+  "jobId": "…",
+  "status": "submitted_for_review",
+  "publicUrl": null,
+  "estimatedReach": {
+    "count": 12,
+    "warning": "This configuration reaches only ~12 candidates…"
+  }
+}
+```
+
+Jobs go through standard review before going live. Check `estimatedReach.count` — if below ~30, widen experience range, add locations, or relax must-haves.
+
+## Rate limit
+
+3 `createJob` + 120 global requests per 60 seconds per API key.
+
+## Typical flow with search
+
+1. Use [Search candidates](/guides/search-candidates) to validate role criteria and pool size
+2. Post the job with aligned title, experience, salary, and locations
+3. Monitor applicants in the Cutshort product UI
+
+## Errors
+
+| `error_code` | HTTP | Meaning |
+| --- | --- | --- |
+| `insufficient_scope` | 403 | Key lacks `jobs:write` |
+| `location_not_resolved` | 400 | City name could not be canonicalized |
+| `no_team_in_workspace` | 400 | Acting user has no team in workspace |
+| `job_create_failed` | 502 | Upstream creation failed |

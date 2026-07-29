@@ -1,0 +1,69 @@
+---
+title: Profile signals
+description: AI-evaluated pedigree, quality, and industry tags on search hits
+---
+
+Every search hit includes a **`profileSignals`** object — pre-digested AI evaluation from the candidate's profile. Use it for triage alongside `redactedResumeText`.
+
+## Shape
+
+```json
+{
+  "educationPedigree": { "score": 3, "level": "tier1plus", "reason": "B.Tech from IIT Delhi…" },
+  "workQuality":       { "score": 3, "level": "high", "reason": "…" },
+  "careerGrowth":      { "score": 2, "level": "fast", "reason": "…" },
+  "startupExperience": { "score": 3, "level": "funded_startup", "reason": "…" },
+  "entrepreneurship":  { "score": 2, "level": "early_employee", "reason": "…" },
+  "jobTenure":         { "score": 1, "level": "stable", "reason": "…" },
+  "industryTags": [
+    { "tag": "ecommerce", "label": "E-commerce", "score": 3, "reason": "…" }
+  ]
+}
+```
+
+Each scalar field is either `{ score, level, reason }` or **`null`**.
+
+## How to interpret
+
+| Field | Meaning |
+| --- | --- |
+| **`reason`** | Authoritative one-line explanation — show this to users |
+| **`level`** | Normalized bucket for comparison |
+| **`score`** | Raw strength 0–3 |
+| **`null`** | Not evaluated — **not a negative signal** |
+
+## Scalar fields and levels
+
+| Field | Levels (best → weakest) |
+| --- | --- |
+| `educationPedigree` | `tier1plus` → `tier1` → `tier2` |
+| `workQuality` | `high` → `medium` → `low` |
+| `careerGrowth` | `fast` → `moderate` → `slow` |
+| `startupExperience` | `funded_startup` → `other_startup` |
+| `entrepreneurship` | `cofounder` → `early_employee` |
+| `jobTenure` | `short_tenure` → `mixed` → `stable` |
+
+### Education pedigree ↔ search filter
+
+| `level` | Colleges |
+| --- | --- |
+| `tier1plus` | IIT, IIM, BITS Pilani, top NIT/IIIT |
+| `tier1` | Other NITs, IIITs, top state universities |
+| `tier2` | Other engineering / management colleges |
+
+Filter with `eduPed=tier1plus-tier1` on search, or run a broader search and rank by `profileSignals.educationPedigree` post-fetch.
+
+## Industry tags
+
+`industryTags` lists domain experience (e-commerce, B2B SaaS, fintech, etc.) with `label`, `score`, and `reason`. Only tags with score ≥ 2 are included.
+
+## Mapping to search filters
+
+| Signal / level | Search param |
+| --- | --- |
+| `workQuality.level = high` | `workQual=high` |
+| `careerGrowth.level = fast` | `carGrowth=fast` |
+| `startupExperience.level = funded_startup` | `startupExp=funded_startup` |
+| `entrepreneurship.level = cofounder` | `entrExp=cofounder` |
+
+When requirements are preferences (not hard filters), run a broader search and sort by the relevant `profileSignals` field instead of over-narrowing filters.

@@ -1,0 +1,75 @@
+---
+title: Introduction
+description: Search India's tech talent with the Cutshort Public API
+---
+
+The Cutshort Public API lets you **search India's tech talent database** from your product, internal tools, or automation scripts.
+
+## What's in v1
+
+| Endpoint | Purpose |
+| --- | --- |
+| [`GET /search/candidates`](/api-reference/search/search-candidates) | **Primary** — structured + AI search, 10 results per page |
+| [`GET /jobs/{jobId}/stages`](/api-reference/jobs/list-job-stages) | Pipeline stages and `stageId` values for a job |
+| [`GET /jobs/{jobId}/applications`](/api-reference/applications/list-job-applications) | Applications for a job — default: relevance-sorted Applications stage |
+| [`GET /applications/{applicationId}`](/api-reference/applications/get-application-detail) | Application detail with resume + profile signals (eval keys OK) |
+| [`GET /candidates/{talentCardId}`](/api-reference/candidates/get-candidate-detail) | Candidate detail — contact info when unlocked |
+| [`POST /candidates/{talentCardId}/unlock`](/api-reference/candidates/unlock-candidate) | Unlock profile — consumes one API profile download credit |
+| [`GET /usage`](/api-reference/usage/get-usage) | Search counts, profile download credits, subscription snapshot |
+| [`POST /jobs`](/api-reference/jobs/create-job) | Post a job with auto-configured pipeline and outreach |
+
+## Base URL
+
+```
+https://cutshort.io/api/v1
+```
+
+## What search returns
+
+Each hit includes headline, experience, salary, work history, education, **profileSignals** (AI-evaluated pedigree, quality, industry tags), and a **redacted resume excerpt**.
+
+Search hits do **not** include candidate names, email, or phone. To contact someone you shortlist from **talent search**, use [Get candidate details](/guides/get-candidate-details).
+
+For **candidates who applied to your jobs**, use [Job applications](/guides/job-applications) — eval keys can list and read application detail (resume + profile signals) without unlock.
+
+## Getting API access
+
+### In the product
+
+If you are an **approved employer** on Cutshort:
+
+1. Sign in at [cutshort.io](https://cutshort.io)
+2. Go to **Settings → Integrations → API Key**
+3. Choose key type and click **Generate API key**
+
+| Key type | Who can generate | Scopes |
+| --- | --- | --- |
+| **Eval access** | All approved employers | `search:read`, `applications:read`, `jobs:read` (read-only) |
+| **Production access** | Workspaces with production API enabled | All scopes (unlocks, job posting, messaging, etc.) |
+
+<Note>
+  The **API Key** section appears only for approved employers. If you don't see it, complete employer verification on Cutshort first.
+</Note>
+
+### Request production access
+
+Eval keys are available immediately. To self-serve **production** keys from Settings, Cutshort must enable production API access on your workspace. Email **[hello@cutshort.io](mailto:hello@cutshort.io?subject=Cutshort%20API%20production%20access%20request)** with your workspace name and use case.
+
+See [Authentication](/authentication) for headers, scopes, and key handling.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Run your first search in 2 minutes
+  </Card>
+  <Card title="Search guide" icon="magnifying-glass" href="/guides/search-candidates">
+    Filters, AI search, and `inresume` booleans
+  </Card>
+  <Card title="Candidate details" icon="user" href="/guides/get-candidate-details">
+    Contact info, unlock, and profile download credits
+  </Card>
+  <Card title="Job applications" icon="briefcase" href="/guides/job-applications">
+    Stages, relevance-sorted applications, application detail
+  </Card>
+</CardGroup>

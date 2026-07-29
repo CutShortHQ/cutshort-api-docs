@@ -1,0 +1,128 @@
+---
+title: Search candidates
+description: Structured filters, AI search, and resume boolean queries
+---
+
+`GET /search/candidates` is the primary v1 endpoint. It searches Cutshort's talent database and returns **10 hits per page** with triage data — no identity or contact fields.
+
+## Response fields
+
+Each hit includes:
+
+| Field | Description |
+| --- | --- |
+| `talentCardId` | Stable ID for follow-up API calls — see [Get candidate details](/guides/get-candidate-details) |
+| `headline` | Role / skills summary |
+| `experience` | Total years |
+| `locations` | Desired work locations |
+| `currentLocation`, `currentCompany` | Current placement |
+| `currentSalary` | Annual INR |
+| `workHistory` | Compact strings, most recent first (max 8) |
+| `education` | Compact degree/college strings (max 4) |
+| `profileSignals` | AI-evaluated pedigree, quality, industry — see [Profile signals](/guides/profile-signals) |
+| `redactedResumeText` | Identity-stripped resume excerpt (~4k chars) |
+
+Use `profileSignals` and `redactedResumeText` together to judge fit without contact details. When you want email or phone from **talent search**, unlock via [Get candidate details](/guides/get-candidate-details).
+
+For **job applicants**, use [Job applications](/guides/job-applications) — application detail includes `profileSignals` without unlock.
+
+## AI / NLP search
+
+Add `q` (max 500 characters) for semantic ranking:
+
+```
+GET /search/candidates?q=ML engineer with startup pedigree&minexp=3&maxexp=8
+```
+
+Cutshort rewrites `q` with a role-summary prompt, embeds it, and runs kNN search. Short phrases like `python developer` work. Combine `q` with structured filters — filters narrow the pool, `q` ranks within it.
+
+Response includes `searchType: "ai"` when `q` is present, otherwise `"structured"`.
+
+## Skill search — prefer `inresume`
+
+| Param | Mechanism | When to use |
+| --- | --- | --- |
+| `skills` | Matches candidates who **tagged** a skill in their profile | Narrow taxonomy filter |
+| **`inresume`** | Lucene boolean over **full resume text** | **Default for skill searches** — higher recall |
+
+### Good `inresume` example
+
+```
+(python OR django OR fastapi) AND (pytorch OR tensorflow OR sklearn OR "machine learning")
+```
+
+Rules:
+
+- Use uppercase `AND` / `OR` / `NOT`
+- Quote phrases: `"machine learning"`, `"system design"`
+- Keep 2–4 skill groups — more groups reduce recall
+- Do not URL-encode manually; pass the raw expression
+
+## Location encoding
+
+| Param | Meaning |
+| --- | --- |
+| `locations` | Where the candidate should be willing to work |
+| `currlocation` | Candidate's current city |
+
+Encoding:
+
+- Spaces → `+` (e.g. `Navi+Mumbai`)
+- Multiple cities → dash-separated (`Mumbai-Pune`)
+- Bangalore → `Bengaluru+%28Bangalore%29`
+
+## Experience and salary
+
+Always pass **both** bounds when filtering experience:
+
+| Param | Notes |
+| --- | --- |
+| `minexp` / `maxexp` | Years; decimals OK (e.g. `4.5`) |
+| `minsal` / `maxsal` | Current CTC in INR |
+| `minexpectedSal` / `maxexpectedSal` | Expected CTC in INR |
+
+If only one experience bound is sent, the API fills the other automatically.
+
+## Quality filters
+
+| Param | Values | Meaning |
+| --- | --- | --- |
+| `eduPed` | `tier1plus`, `tier1`, `tier2` | College pedigree (dash-separated) |
+| `startupExp` | `funded_startup`, `other_startup` | Startup background |
+| `workQual` | `high` | Work quality signal |
+| `carGrowth` | `fast` | Fast career growth |
+| `not_itExp` | `largeITServices` | Exclude large IT services |
+| `entrExp` | `cofounder`, `earlyEmployee` | Entrepreneurship |
+| `not_jobTenure` | `short` | Exclude short-tenure patterns |
+| `activity` | `active-3-months`, `active-6-months` | Recency on Cutshort |
+
+These filters correspond to fields in [`profileSignals`](/guides/profile-signals) on each hit.
+
+## Pagination
+
+| Param | Default | Max |
+| --- | --- | --- |
+| `page` | 1 | — |
+| `pageSize` | 10 | **20** |
+
+## Search discipline
+
+- Run searches **sequentially** — not in parallel
+- Review each page before refining
+- Avoid near-identical queries (overlapping results waste quota)
+- When exploring multiple angles, use disjoint slices (different experience bands or locations)
+
+See [Rate limits](/guides/rate-limits) for burst caps.
+
+## Example — ML engineer in Bangalore
+
+```bash
+curl -G "https://cutshort.io/api/v1/search/candidates" \
+  -H "Authorization: Bearer cs_live_YOUR_KEY" \
+  --data-urlencode 'q=ML model training production experience' \
+  --data-urlencode 'minexp=3' \
+  --data-urlencode 'maxexp=8' \
+  --data-urlencode 'eduPed=tier1plus-tier1' \
+  --data-urlencode 'locations=Bengaluru+%28Bangalore%29' \
+  --data-urlencode 'inresume=(python OR pytorch OR tensorflow) AND ("machine learning" OR ML)'
+```

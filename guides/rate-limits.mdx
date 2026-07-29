@@ -1,0 +1,82 @@
+---
+title: Rate limits
+description: Burst limits, stacking, and error handling
+---
+
+Cutshort uses **Redis rate limits** for burst protection. Limits are keyed by **API key** (not IP).
+
+Rate limits are separate from **billing-period profile download credits** and **plan search throttles**.
+
+## Request rate limits (stacking)
+
+Every authenticated request consumes the **global** limit. Some routes also consume a **route-class** limit.
+
+| Class | Limit (per key / 60s) | Block duration | Routes |
+| --- | --- | --- | --- |
+| **global** | 120 | 60s | All `/api/v1/*` |
+| **search** | 10 | 120s | `GET /search/candidates` |
+| **sensitiveRead** | 30 | 60s | `GET /candidates/{talentCardId}`, `GET /applications/{applicationId}` |
+| **unlock** | 30 | 120s | `POST /candidates/{talentCardId}/unlock` |
+| **createJob** | 3 | 300s | `POST /jobs` |
+
+### Stacking examples
+
+| Call | Counters consumed |
+| --- | --- |
+| `GET /search/candidates` | global + search |
+| `GET /jobs/{jobId}/stages` | global only |
+| `GET /jobs/{jobId}/applications` | global only |
+| `GET /applications/{applicationId}` | global + sensitiveRead |
+| `GET /candidates/{talentCardId}` | global + sensitiveRead |
+| `POST /candidates/{talentCardId}/unlock` | global + unlock |
+| `GET /usage` | global only |
+| `POST /jobs` | global + createJob |
+
+## On limit exceeded
+
+HTTP **429** with:
+
+```json
+{
+  "error_code": "rate_limit_exceeded",
+  "error_description": "Rate limit exceeded for this search endpoint. Retry after 42 seconds."
+}
+```
+
+The response includes a **`Retry-After`** header (seconds). Back off and retry — do not retry in a tight loop.
+
+## Other 429 responses
+
+| `error_code` | Meaning |
+| --- | --- |
+| `search_throttled` | Plan-level search throttle from upstream (not the Redis burst limit) |
+| `api_unlock_limit_reached` | **API profile download credits** exhausted for the billing period |
+
+See [Get candidate details](/guides/get-candidate-details) for the unlock credit model.
+
+## Usage metering
+
+`GET /usage` returns search counts and profile download credit usage for the current billing period:
+
+```json
+{
+  "searches": { "structured": 42, "ai": 18 },
+  "apiUnlocks": { "used": 12, "available": 188 },
+  "billingPeriod": "2026-07"
+}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `searches.*` | Search calls this period (informational) |
+| `apiUnlocks.used` | Profile downloads via API this period |
+| `apiUnlocks.available` | Credits left before unlock calls start failing |
+
+Search counts are informational. There is no separate monthly search cap in Public API beyond burst limits and upstream throttles.
+
+## Best practices
+
+- Run searches sequentially, not in parallel
+- Check `apiUnlocks.available` before batch unlocks
+- Cache results client-side when iterating on the same role
+- Check `Retry-After` on 429 and exponential-backoff retry
