@@ -1,11 +1,12 @@
 ---
-title: Rate limits
-description: Burst limits, stacking, and error handling
+title: Rate limits and quotas
+description: Burst limits, cycle quotas, and error handling
 ---
 
-Cutshort uses **Redis rate limits** for burst protection. Limits are keyed by **API key** (not IP).
+Two separate mechanisms limit API usage:
 
-Rate limits are separate from **billing-period profile download credits** and **plan search throttles**.
+1. **Rate limits** — per-minute burst protection, keyed by **API key**. Hitting one means *slow down and retry*.
+2. **Cycle quotas** — workspace-level `used`/`limit` meters (unlocks, searches, messages) that reset each cycle. Hitting one means *you're done until reset or upgrade*.
 
 ## Request rate limits (stacking)
 
@@ -15,24 +16,11 @@ Every authenticated request consumes the **global** limit. Some routes also cons
 | --- | --- | --- | --- |
 | **global** | 120 | 60s | All `/api/v1/*` |
 | **search** | 10 | 120s | `GET /search/candidates` |
-| **sensitiveRead** | 30 | 60s | `GET /candidates/{talentCardId}`, `GET /applications/{applicationId}` |
-| **unlock** | 30 | 120s | `POST /candidates/{talentCardId}/unlock` |
-| **createJob** | 3 | 300s | `POST /jobs` |
+| **sensitiveRead** | 30 | 60s | `GET /candidates/{talentCardId}` |
+| **createJob** | 5 | 300s | `POST /jobs` |
+| **messageCandidate** | 10 | 120s | `POST /message-candidate` |
 
-### Stacking examples
-
-| Call | Counters consumed |
-| --- | --- |
-| `GET /search/candidates` | global + search |
-| `GET /jobs/{jobId}/stages` | global only |
-| `GET /jobs/{jobId}/applications` | global only |
-| `GET /applications/{applicationId}` | global + sensitiveRead |
-| `GET /candidates/{talentCardId}` | global + sensitiveRead |
-| `POST /candidates/{talentCardId}/unlock` | global + unlock |
-| `GET /usage` | global only |
-| `POST /jobs` | global + createJob |
-
-## On limit exceeded
+### On rate limit exceeded
 
 HTTP **429** with:
 
@@ -45,38 +33,52 @@ HTTP **429** with:
 
 The response includes a **`Retry-After`** header (seconds). Back off and retry — do not retry in a tight loop.
 
-## Other 429 responses
+## Cycle quotas
 
-| `error_code` | Meaning |
-| --- | --- |
-| `search_throttled` | Plan-level search throttle from upstream (not the Redis burst limit) |
-| `api_unlock_limit_reached` | **API profile download credits** exhausted for the billing period |
+Workspace-level running totals, reset each usage cycle. Defaults (production workspaces get custom grants):
 
-See [Get candidate details](/guides/get-candidate-details) for the unlock credit model.
+| Meter | Default limit / cycle | Consumed by | Exhausted → `error_code` |
+| --- | --- | --- | --- |
+| `apiUnlocks` | 10 | `GET /candidates/{id}` on a **locked** candidate (auto-unlock) | `api_unlock_limit_reached` |
+| `searches` | 100 | `GET /search/candidates` (each page request) | `api_search_limit_reached` |
+| `messages` | 20 | `POST /message-candidate` | `api_message_limit_reached` |
 
-## Usage metering
+Quota errors are also HTTP **429**, but retrying does not help — the meter resets at `cycleEndsOn`, or contact Cutshort for a higher grant.
 
-`GET /usage` returns search counts and profile download credit usage for the current billing period:
+## Checking usage
+
+`GET /usage` returns every meter as a `used`/`limit` pair:
 
 ```json
 {
-  "searches": { "structured": 42, "ai": 18 },
-  "apiUnlocks": { "used": 12, "available": 188 },
-  "billingPeriod": "2026-07"
+  "workspaceId": "…",
+  "apiUnlocks": { "used": 3, "limit": 10 },
+  "searches": { "used": 42, "limit": 100 },
+  "messages": { "used": 5, "limit": 20 },
+  "cycleEndsOn": "2026-08-15T00:00:00.000Z",
+  "planExpiresOn": null
 }
 ```
 
 | Field | Meaning |
 | --- | --- |
-| `searches.*` | Search calls this period (informational) |
-| `apiUnlocks.used` | Profile downloads via API this period |
-| `apiUnlocks.available` | Credits left before unlock calls start failing |
+| `cycleEndsOn` | When usage meters reset |
+| `planExpiresOn` | When the workspace subscription ends (`null` for free plans) |
 
-Search counts are informational. There is no separate monthly search cap in Public API beyond burst limits and upstream throttles.
+## Other 429 responses
+
+| `error_code` | Meaning |
+| --- | --- |
+| `rate_limit_exceeded` | Burst limit — retry after `Retry-After` seconds |
+| `api_unlock_limit_reached` | Unlock quota exhausted for the cycle |
+| `api_search_limit_reached` | Search quota exhausted for the cycle |
+| `api_message_limit_reached` | Message quota exhausted for the cycle |
+| `search_throttled` | Plan-level search throttle from upstream (not the Redis burst limit) |
 
 ## Best practices
 
 - Run searches sequentially, not in parallel
-- Check `apiUnlocks.available` before batch unlocks
+- Refine filters instead of paginating deep — every page request costs one search
+- Check `apiUnlocks` before batch candidate fetches
 - Cache results client-side when iterating on the same role
-- Check `Retry-After` on 429 and exponential-backoff retry
+- Check `Retry-After` on 429 and exponential-backoff retry (burst limits only)

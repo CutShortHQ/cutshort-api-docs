@@ -22,8 +22,8 @@ When generating a key you choose:
 
 | Option | Availability | Scopes |
 | --- | --- | --- |
-| **Eval access** (read-only, limited) | All approved employers | `search:read`, `applications:read`, `jobs:read` |
-| **Production access** (all scopes) | Workspace has production API enabled | Unlocks, job write, messaging, etc. |
+| **Eval access** (limited quotas) | All approved employers | `search:read`, `candidates:read` |
+| **Production access** (all scopes) | Workspace has production API enabled | Adds job posting (`jobs:write`) and candidate messaging (`messages:write`), with higher quotas |
 
 Production self-serve requires Cutshort to enable access on your workspace. Email **[hello@cutshort.io](mailto:hello@cutshort.io?subject=Cutshort%20API%20production%20access%20request)** to request it.
 
@@ -43,15 +43,12 @@ Each key carries a set of **scopes** that control which endpoints it can call. I
 
 | Endpoint | Scope |
 | --- | --- |
-| `GET /search/candidates` | `search:read` |
-| `GET /jobs` | `jobs:read` (eval + production) |
-| `GET /jobs/{jobId}/stages` | `jobs:read` (eval + production) |
-| `GET /jobs/{jobId}/applications` | `applications:read` (eval keys) |
-| `GET /applications/{applicationId}` | `applications:read` (eval keys) |
-| `GET /candidates/{talentCardId}` | `candidates:read` (production keys) |
-| `POST /candidates/{talentCardId}/unlock` | `candidates:unlock` (production keys) |
-| `GET /usage` | Any valid key |
+| `GET /search/candidates` | `search:read` (eval + production) |
+| `GET /candidates/{talentCardId}` | `candidates:read` (eval + production; auto-unlock is metered by the workspace unlock quota) |
+| `GET /jobs` | `jobs:read` (production keys) |
 | `POST /jobs` | `jobs:write` (production keys) |
+| `POST /message-candidate` | `messages:write` (production keys) |
+| `GET /usage` | Any valid key |
 
 ## Optional — act on behalf of a user
 
@@ -71,3 +68,7 @@ Pass this alongside `Authorization` when your integration tracks per-user action
 | 403 | `insufficient_scope` | Key cannot call this endpoint |
 | 403 | `approved_employer_required` | Only approved employers can manage keys in Settings |
 | 403 | `beta_access_required` | Workspace does not have production API access enabled |
+
+## API support
+
+Email **[engineering@cutshort.io](mailto:engineering@cutshort.io?subject=Cutshort%20API%20support)** for API questions, integration help, or quota issues. Send the mail from the email address on your Cutshort account so we can identify your workspace.

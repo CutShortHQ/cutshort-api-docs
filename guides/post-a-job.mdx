@@ -4,10 +4,10 @@ description: Create a job with auto-configured pipeline and outreach
 ---
 
 <Note>
-  Requires the `jobs:write` scope on your API key. If you receive `insufficient_scope`, contact Cutshort to adjust your workspace's API provisioning.
+  Requires a **production key** with the `jobs:write` scope. To upgrade from eval access, email [hello@cutshort.io](mailto:hello@cutshort.io). For API support, email [engineering@cutshort.io](mailto:engineering@cutshort.io) from your Cutshort account email.
 </Note>
 
-`POST /jobs` creates a fully configured job from minimal input. Cutshort derives skills and tags, attaches a screening questionnaire, and enables auto-outreach to matching candidates.
+`POST /jobs` creates a fully configured job from minimal input. Cutshort derives skills and tags, attaches an auto-generated screening questionnaire, and enables auto-outreach to matching candidates. After posting, the job is reviewed and then goes live — typically **~30 minutes on business days**.
 
 ## Request
 
@@ -18,6 +18,8 @@ description: Create a job with auto-configured pipeline and outreach
   "locations": ["Bangalore", "Pune"],
   "experienceRange": { "min": 4, "max": 8 },
   "salaryRange": { "min": 2500000, "max": 4500000 },
+  "hideSalary": false,
+  "roleType": "full_time",
   "jobDescription": "Full JD text…",
   "keyRequirements": [
     {
@@ -41,15 +43,17 @@ description: Create a job with auto-configured pipeline and outreach
 | `locations` | If not remote-only | Plain city names — canonicalized server-side (max 5) |
 | `experienceRange` | Yes | `{ min, max }` in years |
 | `salaryRange` | Yes | INR per annum (`2500000` = ₹25 LPA) |
+| `hideSalary` | No | `true` hides the salary range on the public job page (default `false`) |
+| `roleType` | No | `full_time` (default) or `internship` |
 | `jobDescription` | Yes | Max 20,000 characters |
-| `keyRequirements` | No | Max 8 items; max **3** `must_have` |
+| `keyRequirements` | No | Max 8 items |
+| `teamId` | No | Post under a specific team; defaults to your first team in the workspace |
 
 ### `keyRequirements` rules
 
 - Default importance is `nice_to_have`
-- Use `must_have` only for outright-rejection criteria (max 3)
-- Extras beyond 3 `must_have` are **downgraded** to `nice_to_have` in the response (`downgradedFromMustHave: true`)
-- Over-tight must-haves shrink outreach reach to zero — prefer `nice_to_have` for preferences
+- Use `must_have` only for outright-rejection criteria — we **strongly recommend at most 3** (more are accepted, but each must-have shrinks outreach reach)
+- Over-tight must-haves shrink reach to zero — prefer `nice_to_have` for preferences
 
 Experience range and (for non-remote roles) location criteria are added automatically — do not duplicate them in `keyRequirements`.
 
@@ -59,31 +63,37 @@ Experience range and (for non-remote roles) location criteria are added automati
 {
   "jobId": "…",
   "status": "submitted_for_review",
-  "publicUrl": null,
-  "estimatedReach": {
-    "count": 12,
-    "warning": "This configuration reaches only ~12 candidates…"
-  }
+  "publicUrl": null
 }
 ```
 
-Jobs go through standard review before going live. Check `estimatedReach.count` — if below ~30, widen experience range, add locations, or relax must-haves.
+After posting, the job is **reviewed and then goes live**. Review typically takes **~30 minutes on business days**. Matching-candidate outreach and the public job page start once approved; `publicUrl` populates when the job is live.
+
+## Delete a job
+
+```
+DELETE /api/v1/jobs/{jobId}
+```
+
+Soft-deletes the job (same as deleting in the Cutshort UI). It disappears from `GET /jobs`. Optional body: `{ "reason": "duplicate_job", "reasonText": "…" }`.
 
 ## Rate limit
 
-3 `createJob` + 120 global requests per 60 seconds per API key.
+5 `createJob` + 120 global requests per 60 seconds per API key.
 
 ## Typical flow with search
 
 1. Use [Search candidates](/guides/search-candidates) to validate role criteria and pool size
 2. Post the job with aligned title, experience, salary, and locations
-3. Monitor applicants in the Cutshort product UI
+3. [Message shortlisted candidates](/guides/message-candidate) to invite them to apply
+4. Monitor applicants in the Cutshort product UI
 
 ## Errors
 
 | `error_code` | HTTP | Meaning |
 | --- | --- | --- |
-| `insufficient_scope` | 403 | Key lacks `jobs:write` |
+| `insufficient_scope` | 403 | Key lacks `jobs:write` (eval keys cannot post jobs) |
 | `location_not_resolved` | 400 | City name could not be canonicalized |
 | `no_team_in_workspace` | 400 | Acting user has no team in workspace |
+| `team_not_in_workspace` | 400 | Provided `teamId` does not belong to your workspace |
 | `job_create_failed` | 502 | Upstream creation failed |

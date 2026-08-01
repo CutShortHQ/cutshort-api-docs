@@ -55,15 +55,17 @@ Filter with `eduPed=tier1plus-tier1` on search, or run a broader search and rank
 
 ## Industry tags
 
-`industryTags` lists domain experience (e-commerce, B2B SaaS, fintech, etc.) with `label`, `score`, and `reason`. Only tags with score ≥ 2 are included.
+`industryTags` lists domain experience (e-commerce, B2B SaaS, fintech, etc.) with `label`, `score`, and `reason`. Only tags with score ≥ 2 are included. Filter by domain at search time with the `domainTags` param.
 
 ## Mapping to search filters
 
 | Signal / level | Search param |
 | --- | --- |
-| `workQuality.level = high` | `workQual=high` |
-| `careerGrowth.level = fast` | `carGrowth=fast` |
+| `educationPedigree.level` | `eduPed=tier1plus-tier1` etc. |
 | `startupExperience.level = funded_startup` | `startupExp=funded_startup` |
 | `entrepreneurship.level = cofounder` | `entrExp=cofounder` |
+| `industryTags` | `domainTags=b2b_saas-ecommerce` etc. |
 
-When requirements are preferences (not hard filters), run a broader search and sort by the relevant `profileSignals` field instead of over-narrowing filters.
+`workQuality`, `careerGrowth`, and `jobTenure` are **response-only** signals — there is no search filter for them. When those matter, run a broader search and rank hits by the relevant `profileSignals` field post-fetch.
+
+When requirements are preferences (not hard filters), prefer that broader-search-then-rank approach — or use `profileAttributesMode=or` (see [Search candidates](/guides/search-candidates)) instead of over-narrowing filters.

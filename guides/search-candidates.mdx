@@ -22,9 +22,7 @@ Each hit includes:
 | `profileSignals` | AI-evaluated pedigree, quality, industry — see [Profile signals](/guides/profile-signals) |
 | `redactedResumeText` | Identity-stripped resume excerpt (~4k chars) |
 
-Use `profileSignals` and `redactedResumeText` together to judge fit without contact details. When you want email or phone from **talent search**, unlock via [Get candidate details](/guides/get-candidate-details).
-
-For **job applicants**, use [Job applications](/guides/job-applications) — application detail includes `profileSignals` without unlock.
+Use `profileSignals` and `redactedResumeText` together to judge fit without contact details. When you want email, phone, or the resume file, call [Get candidate details](/guides/get-candidate-details) — it auto-unlocks the candidate (one credit).
 
 ## AI / NLP search
 
@@ -38,24 +36,27 @@ Cutshort rewrites `q` with a role-summary prompt, embeds it, and runs kNN search
 
 Response includes `searchType: "ai"` when `q` is present, otherwise `"structured"`.
 
-## Skill search — prefer `inresume`
+## Skill search — use `inresume`
 
-| Param | Mechanism | When to use |
-| --- | --- | --- |
-| `skills` | Matches candidates who **tagged** a skill in their profile | Narrow taxonomy filter |
-| **`inresume`** | Lucene boolean over **full resume text** | **Default for skill searches** — higher recall |
+Skill requirements are expressed with **`inresume`** — a Lucene boolean query over the **full resume text**. It catches every mention (tagged skills, job descriptions, projects), so recall is much higher than tag-based filtering. There is no separate skills parameter.
 
-### Good `inresume` example
+### Good `inresume` examples
 
 ```
 (python OR django OR fastapi) AND (pytorch OR tensorflow OR sklearn OR "machine learning")
+
+(java OR kotlin OR go) AND (microservices OR "distributed systems")
+
+(react OR "react.js" OR nextjs) AND (typescript) AND (jest OR cypress)
 ```
 
 Rules:
 
 - Use uppercase `AND` / `OR` / `NOT`
 - Quote phrases: `"machine learning"`, `"system design"`
+- Within a group, list synonyms and abbreviations with `OR` (`ML OR "machine learning"`)
 - Keep 2–4 skill groups — more groups reduce recall
+- Avoid version suffixes: `python`, not `python 3.10`
 - Do not URL-encode manually; pass the raw expression
 
 ## Location encoding
@@ -79,24 +80,42 @@ Always pass **both** bounds when filtering experience:
 | --- | --- |
 | `minexp` / `maxexp` | Years; decimals OK (e.g. `4.5`) |
 | `minsal` / `maxsal` | Current CTC in INR |
-| `minexpectedSal` / `maxexpectedSal` | Expected CTC in INR |
 
 If only one experience bound is sent, the API fills the other automatically.
 
-## Quality filters
+## Availability
 
-| Param | Values | Meaning |
+| Param | Meaning |
+| --- | --- |
+| `canjoinin` | Max days to join (e.g. `30`) — includes candidates on notice with enough time left |
+| `onNoticePeriodOrNotWorking` | `true` = only candidates serving notice or not working (stricter than `canjoinin`) |
+
+## Profile attribute filters
+
+| Param | Values (dash-separated) | Meaning |
 | --- | --- | --- |
-| `eduPed` | `tier1plus`, `tier1`, `tier2` | College pedigree (dash-separated) |
+| `eduPed` | `tier1plus`, `tier1`, `tier2` | College pedigree |
 | `startupExp` | `funded_startup`, `other_startup` | Startup background |
-| `workQual` | `high` | Work quality signal |
-| `carGrowth` | `fast` | Fast career growth |
-| `not_itExp` | `largeITServices` | Exclude large IT services |
+| `not_itExp` | `largeITServices`, `otherITServices` | Exclude IT-services background |
 | `entrExp` | `cofounder`, `earlyEmployee` | Entrepreneurship |
-| `not_jobTenure` | `short` | Exclude short-tenure patterns |
+| `domainTags` | `banking_and_finance`, `healthcare`, `ecommerce`, `computer_security`, `travel`, `edtech_education`, `gaming`, `consumer_internet`, `b2b_saas`, `software_product`, `gcc` | Industry / domain background (high-confidence matching) |
 | `activity` | `active-3-months`, `active-6-months` | Recency on Cutshort |
 
-These filters correspond to fields in [`profileSignals`](/guides/profile-signals) on each hit.
+These filters correspond to fields in [`profileSignals`](/guides/profile-signals) on each hit. Dash-separated values *within* one param are OR'd (e.g. `eduPed=tier1plus-tier1` = either tier).
+
+### Combining profile attributes: AND vs OR
+
+By default, supplying more than one of `eduPed`, `startupExp`, `entrExp`, `domainTags` requires a candidate to match **all** of them. Add `profileAttributesMode=or` to match **any**:
+
+```
+# AND (default): tier1plus education AND cofounder background
+eduPed=tier1plus&entrExp=cofounder
+
+# OR: tier1plus education OR cofounder background
+eduPed=tier1plus&entrExp=cofounder&profileAttributesMode=or
+```
+
+`profileAttributesMode=or` affects only these four params. All other filters (location, experience, salary, `inresume`, availability, `activity`) always stay ANDed.
 
 ## Pagination
 

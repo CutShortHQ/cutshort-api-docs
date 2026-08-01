@@ -1,0 +1,82 @@
+---
+title: Message a candidate
+description: Invite shortlisted candidates to apply to your job
+---
+
+<Note>
+  Requires a **production key** with the `messages:write` scope. To upgrade from eval access, email [hello@cutshort.io](mailto:hello@cutshort.io). For API support, email [engineering@cutshort.io](mailto:engineering@cutshort.io) from your Cutshort account email.
+</Note>
+
+`POST /message-candidate` sends a candidate an **invite to apply** to one of your jobs, with your custom message. This is the outreach step of the core loop: after searching and shortlisting, close the loop by inviting the best candidates to your posted job.
+
+The candidate is notified by Cutshort. If they reply or apply, the conversation and application appear in your Cutshort inbox and job pipeline — replies do not come back through the API.
+
+No unlock is needed — you can message any candidate found in search using their `talentCardId`.
+
+## Request
+
+```
+POST /api/v1/message-candidate
+```
+
+```json
+{
+  "talentCardId": "64f1a2b3c4d5e6f7a8b9c0d1",
+  "jobId": "64f1a2b3c4d5e6f7a8b9c0d2",
+  "message": "Hi! Your data engineering background looks like a great fit for our Senior Data Engineer role. We'd love for you to apply — you can also book a chat directly: https://cal.com/acme/intro"
+}
+```
+
+| Field | Required | Notes |
+| --- | --- | --- |
+| `talentCardId` | Yes | From [search results](/guides/search-candidates) |
+| `jobId` | Yes | A job in your workspace — typically from [`POST /jobs`](/guides/post-a-job) |
+| `message` | Yes | Plain text, max 3,000 characters. Personalize it — reference their specific experience. Including a scheduling link (Calendly, cal.com) works well. |
+
+## Response
+
+```json
+{
+  "success": true,
+  "talentCardId": "64f1a2b3c4d5e6f7a8b9c0d1",
+  "jobId": "64f1a2b3c4d5e6f7a8b9c0d2"
+}
+```
+
+## One invite per candidate per job
+
+Each (job, candidate) pair can receive **one** invite. A second attempt returns **409** `invite_already_sent`. To reach the same candidate about a different role, use that role's `jobId`.
+
+## Limits
+
+- **Rate limit:** 10 `messageCandidate` + 120 global requests per 60s per API key
+- **Quota:** 20 messages per cycle by default (workspace-level) — check `messages` in [`GET /usage`](/guides/rate-limits#checking-usage)
+
+## Typical flow
+
+1. [Search candidates](/guides/search-candidates) and shortlist using `profileSignals` and the resume excerpt
+2. [Post a job](/guides/post-a-job) (or reuse an existing `jobId`). New jobs are reviewed first and typically go live in ~30 minutes on business days — you can still message candidates with the returned `jobId` immediately.
+3. Optionally [get candidate details](/guides/get-candidate-details) for a closer look before reaching out
+4. Message each shortlisted candidate with a personalized note
+
+```bash
+curl -s -X POST "https://cutshort.io/api/v1/message-candidate" \
+  -H "Authorization: Bearer cs_live_PROD_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "talentCardId": "TALENT_CARD_ID",
+    "jobId": "JOB_ID",
+    "message": "Hi! We loved your profile and would like you to apply…"
+  }'
+```
+
+## Errors
+
+| `error_code` | HTTP | Meaning |
+| --- | --- | --- |
+| `insufficient_scope` | 403 | Key lacks `messages:write` (eval keys cannot message) |
+| `talent_card_not_found` | 404 | Unknown `talentCardId` |
+| `job_not_in_workspace` | 404 | Job does not belong to your workspace |
+| `invite_already_sent` | 409 | This candidate was already invited to this job |
+| `api_message_limit_reached` | 429 | Message quota exhausted for the cycle |
+| `message_candidate_failed` | 502 | Upstream send failed — safe to retry once |

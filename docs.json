@@ -39,10 +39,10 @@
             "pages": [
               "guides/search-candidates",
               "guides/get-candidate-details",
-              "guides/job-applications",
               "guides/profile-signals",
-              "guides/rate-limits",
-              "guides/post-a-job"
+              "guides/post-a-job",
+              "guides/message-candidate",
+              "guides/rate-limits"
             ]
           }
         ]

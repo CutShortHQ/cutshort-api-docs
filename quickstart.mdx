@@ -10,11 +10,13 @@ description: Your first talent search in two minutes
 ## 1. Generate an API key
 
 1. Open **Settings → Integrations → API Key**
-2. Select **Eval access** (read-only) — available to all approved employers
+2. Select **Eval access** — available to all approved employers
 3. Click **Generate API key**
 4. Copy the `cs_live_…` value from the confirmation modal
 
 Need **Production access** (all scopes)? Your workspace must have production API enabled — email [hello@cutshort.io](mailto:hello@cutshort.io?subject=Cutshort%20API%20production%20access%20request), then choose **Production access** when generating a key.
+
+For API support (questions, integration help, quotas), email [engineering@cutshort.io](mailto:engineering@cutshort.io?subject=Cutshort%20API%20support) from the email address on your Cutshort account.
 
 ## 2. Search candidates
 
@@ -99,7 +101,7 @@ console.log(data.totalCount, data.results.length);
 ```
 
 <Note>
-  `pageSize` defaults to **10** and accepts up to **20** on search and applications list endpoints.
+  `pageSize` defaults to **10** and accepts up to **20** on the search endpoint.
 </Note>
 
 ## 4. Check usage
@@ -109,33 +111,37 @@ curl -s "https://cutshort.io/api/v1/usage" \
   -H "Authorization: Bearer cs_live_YOUR_KEY"
 ```
 
-Returns `searches.structured`, `searches.ai`, `apiUnlocks` (profile download credits), and subscription metadata for the current billing period.
-
-## 5. Get contact info (production keys)
-
-Eval keys can search but cannot unlock. With a **production key**, after shortlisting a candidate from search:
-
-```bash
-# Check profile download credits
-curl -s "https://cutshort.io/api/v1/usage" \
-  -H "Authorization: Bearer cs_live_PROD_KEY"
-
-# Unlock (1 credit per candidate)
-curl -s -X POST "https://cutshort.io/api/v1/candidates/TALENT_CARD_ID/unlock" \
-  -H "Authorization: Bearer cs_live_PROD_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{}'
-
-# Fetch email and phone
-curl -s "https://cutshort.io/api/v1/candidates/TALENT_CARD_ID" \
-  -H "Authorization: Bearer cs_live_PROD_KEY"
+```json
+{
+  "apiUnlocks": { "used": 0, "limit": 10 },
+  "searches": { "used": 1, "limit": 100 },
+  "messages": { "used": 0, "limit": 20 },
+  "cycleEndsOn": "2026-08-15T00:00:00.000Z"
+}
 ```
 
-See [Get candidate details](/guides/get-candidate-details) for the full unlock flow.
+Every meter is a `used`/`limit` pair; meters reset at `cycleEndsOn`.
+
+## 5. Get contact info (auto-unlock)
+
+After shortlisting a candidate from search, one call gets you their identity, resume text, and a resume file download link. If the candidate is locked for your workspace, this call **unlocks them automatically** — spending one unlock credit:
+
+```bash
+# Check remaining unlock credits first
+curl -s "https://cutshort.io/api/v1/usage" \
+  -H "Authorization: Bearer cs_live_YOUR_KEY"
+
+# Fetch details (auto-unlocks; 1 credit per new candidate)
+curl -s "https://cutshort.io/api/v1/candidates/TALENT_CARD_ID" \
+  -H "Authorization: Bearer cs_live_YOUR_KEY"
+```
+
+See [Get candidate details](/guides/get-candidate-details) for the full flow.
 
 ## Next
 
 - [Search candidates guide](/guides/search-candidates) — filters, `inresume`, location encoding
-- [Get candidate details](/guides/get-candidate-details) — contact info and profile download credits
+- [Get candidate details](/guides/get-candidate-details) — contact info, resume file, auto-unlock credits
 - [Profile signals](/guides/profile-signals) — interpret `profileSignals` on each hit
-- [Rate limits](/guides/rate-limits) — burst caps and error handling
+- [Post a job](/guides/post-a-job) and [Message a candidate](/guides/message-candidate) — production keys
+- [Rate limits](/guides/rate-limits) — burst caps, quotas, and error handling

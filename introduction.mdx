@@ -3,20 +3,20 @@ title: Introduction
 description: Search India's tech talent with the Cutshort Public API
 ---
 
-The Cutshort Public API lets you **search India's tech talent database** from your product, internal tools, or automation scripts.
+The Cutshort Public API lets you **search India's tech talent database, hire from it, and reach out to candidates** from your product, internal tools, AI agents, or automation scripts.
 
 ## What's in v1
 
 | Endpoint | Purpose |
 | --- | --- |
 | [`GET /search/candidates`](/api-reference/search/search-candidates) | **Primary** — structured + AI search, 10 results per page |
-| [`GET /jobs/{jobId}/stages`](/api-reference/jobs/list-job-stages) | Pipeline stages and `stageId` values for a job |
-| [`GET /jobs/{jobId}/applications`](/api-reference/applications/list-job-applications) | Applications for a job — default: relevance-sorted Applications stage |
-| [`GET /applications/{applicationId}`](/api-reference/applications/get-application-detail) | Application detail with resume + profile signals (eval keys OK) |
-| [`GET /candidates/{talentCardId}`](/api-reference/candidates/get-candidate-detail) | Candidate detail — contact info when unlocked |
-| [`POST /candidates/{talentCardId}/unlock`](/api-reference/candidates/unlock-candidate) | Unlock profile — consumes one API profile download credit |
-| [`GET /usage`](/api-reference/usage/get-usage) | Search counts, profile download credits, subscription snapshot |
+| [`GET /candidates/{talentCardId}`](/api-reference/candidates/get-candidate-detail) | Full candidate detail — **auto-unlocks** locked candidates (spends one credit) |
+| [`GET /jobs`](/api-reference/jobs/list-jobs) | List your workspace's jobs |
 | [`POST /jobs`](/api-reference/jobs/create-job) | Post a job with auto-configured pipeline and outreach |
+| [`POST /message-candidate`](/api-reference/messaging/message-candidate) | Invite a candidate to apply to your job, with a custom message |
+| [`GET /usage`](/api-reference/usage/get-usage) | Usage meters — `used`/`limit` for unlocks, searches, messages |
+
+**The core loop:** search candidates → get details for your shortlist (auto-unlock) → post a job → message candidates to apply.
 
 ## Base URL
 
@@ -26,11 +26,9 @@ https://cutshort.io/api/v1
 
 ## What search returns
 
-Each hit includes headline, experience, salary, work history, education, **profileSignals** (AI-evaluated pedigree, quality, industry tags), and a **redacted resume excerpt**.
+Each hit includes headline, experience, salary, work history, education, **profileSignals** (AI-evaluated pedigree, quality, industry tags), and a **redacted resume excerpt** (~4k chars).
 
-Search hits do **not** include candidate names, email, or phone. To contact someone you shortlist from **talent search**, use [Get candidate details](/guides/get-candidate-details).
-
-For **candidates who applied to your jobs**, use [Job applications](/guides/job-applications) — eval keys can list and read application detail (resume + profile signals) without unlock.
+Search hits do **not** include candidate names, email, or phone. To get contact details and the actual resume for someone you shortlist, call [Get candidate details](/guides/get-candidate-details) — it unlocks the candidate automatically (one credit per new candidate).
 
 ## Getting API access
 
@@ -42,10 +40,10 @@ If you are an **approved employer** on Cutshort:
 2. Go to **Settings → Integrations → API Key**
 3. Choose key type and click **Generate API key**
 
-| Key type | Who can generate | Scopes |
+| Key type | Who can generate | What it can do |
 | --- | --- | --- |
-| **Eval access** | All approved employers | `search:read`, `applications:read`, `jobs:read` (read-only) |
-| **Production access** | Workspaces with production API enabled | All scopes (unlocks, job posting, messaging, etc.) |
+| **Eval access** | All approved employers | Search + get candidate details, within small quotas (10 unlocks, 100 searches per cycle) |
+| **Production access** | Workspaces with production API enabled | Everything, with higher workspace-specific quotas — adds job posting and candidate messaging |
 
 <Note>
   The **API Key** section appears only for approved employers. If you don't see it, complete employer verification on Cutshort first.
@@ -53,9 +51,13 @@ If you are an **approved employer** on Cutshort:
 
 ### Request production access
 
-Eval keys are available immediately. To self-serve **production** keys from Settings, Cutshort must enable production API access on your workspace. Email **[hello@cutshort.io](mailto:hello@cutshort.io?subject=Cutshort%20API%20production%20access%20request)** with your workspace name and use case.
+Eval keys are available immediately — use them to try the core search → get-candidate experience. To upgrade to **production** keys with higher limits and the full endpoint set, email **[hello@cutshort.io](mailto:hello@cutshort.io?subject=Cutshort%20API%20production%20access%20request)** with your workspace name and use case.
 
 See [Authentication](/authentication) for headers, scopes, and key handling.
+
+## API support
+
+For API questions, integration help, or quota issues, email **[engineering@cutshort.io](mailto:engineering@cutshort.io?subject=Cutshort%20API%20support)**. Send the mail from the email address on your Cutshort account so we can identify your workspace.
 
 ## Next steps
 
@@ -67,9 +69,9 @@ See [Authentication](/authentication) for headers, scopes, and key handling.
     Filters, AI search, and `inresume` booleans
   </Card>
   <Card title="Candidate details" icon="user" href="/guides/get-candidate-details">
-    Contact info, unlock, and profile download credits
+    Contact info, resume file, and auto-unlock credits
   </Card>
-  <Card title="Job applications" icon="briefcase" href="/guides/job-applications">
-    Stages, relevance-sorted applications, application detail
+  <Card title="Message a candidate" icon="paper-plane" href="/guides/message-candidate">
+    Invite shortlisted candidates to apply to your job
   </Card>
 </CardGroup>
