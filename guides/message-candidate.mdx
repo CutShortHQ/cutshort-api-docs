@@ -45,7 +45,9 @@ POST /api/v1/message-candidate
 
 ## One invite per candidate per job
 
-Each (job, candidate) pair can receive **one** invite. A second attempt returns **409** `invite_already_sent`. To reach the same candidate about a different role, use that role's `jobId`.
+Each (job, candidate) pair can receive **one** invite. If they were already invited **or** already exist in that job’s pipeline, a second attempt returns **409** `already_exists_in_job_pipeline`. To reach the same candidate about a different role, use that role's `jobId`.
+
+After inviting, [list applications](/guides/list-applications) anytime to see who is in the job’s Applications stage.
 
 ## Limits
 
@@ -77,6 +79,6 @@ curl -s -X POST "https://cutshort.io/api/v1/message-candidate" \
 | `insufficient_scope` | 403 | Key lacks `messages:write` (eval keys cannot message) |
 | `talent_card_not_found` | 404 | Unknown `talentCardId` |
 | `job_not_in_workspace` | 404 | Job does not belong to your workspace |
-| `invite_already_sent` | 409 | This candidate was already invited to this job |
+| `already_exists_in_job_pipeline` | 409 | Already invited or already in this job’s pipeline |
 | `api_message_limit_reached` | 429 | Message quota exhausted for the cycle |
 | `message_candidate_failed` | 502 | Upstream send failed — safe to retry once |

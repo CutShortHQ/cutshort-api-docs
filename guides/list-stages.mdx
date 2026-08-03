@@ -1,0 +1,35 @@
+---
+title: List job stages
+description: See pipeline stages and application counts for a job
+---
+
+`GET /jobs/{jobId}/stages` returns the hiring pipeline stages for a job, including how many applications are in each stage.
+
+Use this when you need counts across the pipeline, or a `stageId` to pass to [List applications](/guides/list-applications) for a non-default stage.
+
+Requires scope `jobs:read` (eval and production keys that can list jobs).
+
+## Request
+
+```
+GET /api/v1/jobs/{jobId}/stages
+```
+
+## Response
+
+```json
+{
+  "results": [
+    {
+      "stageId": "…",
+      "title": "Applications",
+      "type": "candidates",
+      "order": 1,
+      "applicationCount": 12,
+      "automations": []
+    }
+  ]
+}
+```
+
+The applications inbox stage has `type: "candidates"`. That is the default stage used by list-applications when `stageId` is omitted.

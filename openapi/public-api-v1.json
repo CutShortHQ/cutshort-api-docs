@@ -3,18 +3,48 @@
   "info": {
     "title": "Cutshort Public API v1",
     "version": "1.0.0",
-    "description": "Programmatic access to Cutshort's tech talent database. All endpoints require `Authorization: Bearer cs_live_<key>`.\n\n**Core flow:** search candidates → get candidate details (auto-unlock) → post a job → message candidates to apply."
+    "description": "Programmatic access to Cutshort's tech talent database. All endpoints require `Authorization: Bearer cs_live_<key>`.\n\n**Core flow:** search candidates → get candidate details (auto-unlock) → post a job → message candidates to apply → list applications (optional: list stages)."
   },
   "servers": [
-    { "url": "https://cutshort.io/api/v1", "description": "Production" }
+    {
+      "url": "https://cutshort.io/api/v1",
+      "description": "Production"
+    }
   ],
-  "security": [{ "ApiKeyAuth": [] }],
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ],
   "tags": [
-    { "name": "Search", "description": "Talent database search" },
-    { "name": "Candidates", "description": "Candidate detail with auto-unlock (contact info + resume)" },
-    { "name": "Jobs", "description": "Job posting and listing" },
-    { "name": "Messaging", "description": "Candidate outreach (invite to apply)" },
-    { "name": "Usage", "description": "Cycle usage meters and quotas" }
+    {
+      "name": "Search",
+      "description": "Talent database search"
+    },
+    {
+      "name": "Candidates",
+      "description": "Candidate detail with auto-unlock (contact info + resume)"
+    },
+    {
+      "name": "Jobs",
+      "description": "Job posting and listing"
+    },
+    {
+      "name": "Messaging",
+      "description": "Candidate outreach (invite to apply)"
+    },
+    {
+      "name": "Usage",
+      "description": "Cycle usage meters and quotas"
+    },
+    {
+      "name": "Stages",
+      "description": "Job pipeline stages and counts"
+    },
+    {
+      "name": "Applications",
+      "description": "List applications in a job stage"
+    }
   ],
   "components": {
     "securitySchemes": {
@@ -28,12 +58,21 @@
       "page": {
         "name": "page",
         "in": "query",
-        "schema": { "type": "integer", "default": 1, "minimum": 1 }
+        "schema": {
+          "type": "integer",
+          "default": 1,
+          "minimum": 1
+        }
       },
       "pageSizeLimited": {
         "name": "pageSize",
         "in": "query",
-        "schema": { "type": "integer", "default": 10, "minimum": 1, "maximum": 20 },
+        "schema": {
+          "type": "integer",
+          "default": 10,
+          "minimum": 1,
+          "maximum": 20
+        },
         "description": "Results per page (default 10, max 20)"
       }
     },
@@ -41,41 +80,77 @@
       "UsageMeter": {
         "type": "object",
         "properties": {
-          "used": { "type": "integer", "description": "Consumed in the current cycle" },
-          "limit": { "type": "integer", "description": "Cycle limit (workspace default or grant)" }
+          "used": {
+            "type": "integer",
+            "description": "Consumed in the current cycle"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Cycle limit (workspace default or grant)"
+          }
         }
       },
       "ProfileSignal": {
         "type": "object",
         "nullable": true,
         "properties": {
-          "score": { "type": "number" },
-          "level": { "type": "string" },
-          "reason": { "type": "string", "nullable": true }
+          "score": {
+            "type": "number"
+          },
+          "level": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          }
         }
       },
       "IndustryTag": {
         "type": "object",
         "properties": {
-          "tag": { "type": "string" },
-          "label": { "type": "string" },
-          "score": { "type": "number" },
-          "reason": { "type": "string", "nullable": true }
+          "tag": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "score": {
+            "type": "number"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          }
         }
       },
       "ProfileSignals": {
         "type": "object",
         "description": "AI-evaluated profile signals. Each scalar field is { score, level, reason } or null (null = not evaluated, not a negative signal).",
         "properties": {
-          "educationPedigree": { "$ref": "#/components/schemas/ProfileSignal" },
-          "workQuality": { "$ref": "#/components/schemas/ProfileSignal" },
-          "careerGrowth": { "$ref": "#/components/schemas/ProfileSignal" },
-          "startupExperience": { "$ref": "#/components/schemas/ProfileSignal" },
-          "entrepreneurship": { "$ref": "#/components/schemas/ProfileSignal" },
-          "jobTenure": { "$ref": "#/components/schemas/ProfileSignal" },
+          "educationPedigree": {
+            "$ref": "#/components/schemas/ProfileSignal"
+          },
+          "workQuality": {
+            "$ref": "#/components/schemas/ProfileSignal"
+          },
+          "careerGrowth": {
+            "$ref": "#/components/schemas/ProfileSignal"
+          },
+          "startupExperience": {
+            "$ref": "#/components/schemas/ProfileSignal"
+          },
+          "entrepreneurship": {
+            "$ref": "#/components/schemas/ProfileSignal"
+          },
+          "jobTenure": {
+            "$ref": "#/components/schemas/ProfileSignal"
+          },
           "industryTags": {
             "type": "array",
-            "items": { "$ref": "#/components/schemas/IndustryTag" }
+            "items": {
+              "$ref": "#/components/schemas/IndustryTag"
+            }
           }
         }
       },
@@ -83,75 +158,318 @@
         "type": "object",
         "description": "Index-served search hit. No identity or lock fields — use GET /candidates/{talentCardId} for identity (auto-unlocks).",
         "properties": {
-          "talentCardId": { "type": "string" },
-          "headline": { "type": "string" },
-          "experience": { "type": "number", "description": "Total experience in years" },
-          "locations": { "type": "array", "items": { "type": "string" }, "description": "Desired work locations" },
-          "currentLocation": { "type": "string" },
-          "currentCompany": { "type": "string" },
-          "joiningAvailability": { "type": "string" },
-          "currentSalary": { "type": "number", "description": "Current annual salary (INR, normalized)" },
+          "talentCardId": {
+            "type": "string"
+          },
+          "headline": {
+            "type": "string"
+          },
+          "experience": {
+            "type": "number",
+            "description": "Total experience in years"
+          },
+          "locations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Desired work locations"
+          },
+          "currentLocation": {
+            "type": "string"
+          },
+          "currentCompany": {
+            "type": "string"
+          },
+          "joiningAvailability": {
+            "$ref": "#/components/schemas/JoiningAvailability"
+          },
+          "currentSalary": {
+            "type": "number",
+            "description": "Current annual salary (INR, normalized)"
+          },
           "workHistory": {
             "type": "array",
-            "items": { "type": "string" },
+            "items": {
+              "type": "string"
+            },
             "description": "Compact work history, most recent first (max 8), e.g. \"Senior Engineer — Flipkart (2021–2024)\""
           },
           "education": {
             "type": "array",
-            "items": { "type": "string" },
+            "items": {
+              "type": "string"
+            },
             "description": "Compact education list (max 4), e.g. \"B.Tech, IIT Delhi (2018)\""
           },
-          "profileSignals": { "$ref": "#/components/schemas/ProfileSignals" },
-          "redactedResumeText": { "type": "string", "description": "Identity-stripped resume excerpt, capped ~4000 chars" }
+          "profileSignals": {
+            "$ref": "#/components/schemas/ProfileSignals"
+          },
+          "redactedResumeText": {
+            "type": "string",
+            "description": "Identity-stripped resume excerpt, capped ~4000 chars"
+          },
+          "lastSeen": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Candidate last seen on Cutshort"
+          }
         }
       },
       "CandidateDetail": {
         "type": "object",
         "description": "Unlocked candidate detail (GET /candidates/{talentCardId} auto-unlocks locked candidates).",
         "properties": {
-          "talentCardId": { "type": "string" },
-          "lockStatus": { "type": "string", "enum": ["locked", "unlocked"] },
-          "unlockedNow": { "type": "boolean", "description": "true when this call spent an unlock credit; false when the candidate was already unlocked" },
-          "displayName": { "type": "string" },
-          "headline": { "type": "string" },
-          "email": { "type": "string", "nullable": true },
-          "phone": { "type": "string", "nullable": true },
-          "originalResumeFileName": { "type": "string" },
-          "originalResumeDownloadUrl": { "type": "string", "description": "Signed URL to download the candidate's actual resume file. Expires after 1 hour — re-fetch for a fresh link (free once unlocked)." },
-          "profile": { "type": "object", "description": "Structured profile: full resume text (~8k chars), past companies with work summaries, education, skills" }
+          "talentCardId": {
+            "type": "string"
+          },
+          "lockStatus": {
+            "type": "string",
+            "enum": [
+              "locked",
+              "unlocked"
+            ]
+          },
+          "unlockedNow": {
+            "type": "boolean",
+            "description": "true when this call spent an unlock credit; false when the candidate was already unlocked"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "headline": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "originalResumeFileName": {
+            "type": "string"
+          },
+          "originalResumeDownloadUrl": {
+            "type": "string",
+            "description": "Signed URL to download the candidate's actual resume file. Expires after 1 hour — re-fetch for a fresh link (free once unlocked)."
+          },
+          "profile": {
+            "type": "object",
+            "description": "Structured profile: full resume text (~8k chars), past companies with work summaries, education, skills"
+          }
         }
       },
       "ApiError": {
         "type": "object",
         "properties": {
-          "error_code": { "type": "string" },
-          "error_description": { "type": "string" }
+          "error_code": {
+            "type": "string"
+          },
+          "error_description": {
+            "type": "string"
+          }
+        }
+      },
+      "JoiningAvailability": {
+        "type": "object",
+        "description": "Structured joining availability. status is immediate | on_notice_period | not_resigned (or null if unknown).",
+        "properties": {
+          "status": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "immediate",
+              "on_notice_period",
+              "not_resigned",
+              null
+            ]
+          },
+          "noticePeriodEndsOn": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "canJoinHowSoonDays": {
+            "type": "number",
+            "nullable": true,
+            "description": "Notice period length in days when status is not_resigned"
+          }
+        }
+      },
+      "ApplicationRow": {
+        "type": "object",
+        "description": "Application row: search-hit triage fields plus unlocked identity, resume URL, and screening Q&A.",
+        "properties": {
+          "applicationId": {
+            "type": "string"
+          },
+          "jobId": {
+            "type": "string"
+          },
+          "threadId": {
+            "type": "string",
+            "nullable": true
+          },
+          "talentCardId": {
+            "type": "string"
+          },
+          "addedToCurrentStageOn": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "lastActivityOn": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "relevance": {
+            "type": "object",
+            "properties": {
+              "shortlistingCriteriaScore": {
+                "type": "number",
+                "nullable": true
+              },
+              "fitment": {
+                "type": "string",
+                "nullable": true,
+                "description": "strong_fit | maybe_a_fit | not_a_fit"
+              },
+              "fitmentReason": {
+                "type": "string",
+                "nullable": true
+              }
+            }
+          },
+          "unlockedNow": {
+            "type": "boolean",
+            "description": "true when this call spent an unlock credit for this candidate"
+          },
+          "headline": {
+            "type": "string"
+          },
+          "experience": {
+            "type": "number"
+          },
+          "locations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "currentLocation": {
+            "type": "string"
+          },
+          "currentCompany": {
+            "type": "string"
+          },
+          "joiningAvailability": {
+            "$ref": "#/components/schemas/JoiningAvailability"
+          },
+          "lastSeen": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "currentSalary": {
+            "type": "number"
+          },
+          "workHistory": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "education": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "profileSignals": {
+            "$ref": "#/components/schemas/ProfileSignals"
+          },
+          "redactedResumeText": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "originalResumeFileName": {
+            "type": "string"
+          },
+          "originalResumeDownloadUrl": {
+            "type": "string"
+          },
+          "screeningQuestions": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
         }
       }
     },
     "responses": {
       "Unauthorized": {
         "description": "Missing or invalid API key",
-        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } }
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        }
       },
       "Forbidden": {
         "description": "Insufficient scope (e.g. eval key calling a production-only endpoint)",
-        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } }
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        }
       },
       "NotFound": {
         "description": "Resource not found",
-        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } }
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        }
       },
       "TooManyRequests": {
         "description": "Rate limit (error_code `rate_limit_exceeded`, `Retry-After` header) or cycle quota exhausted (`api_unlock_limit_reached`, `api_search_limit_reached`, `api_message_limit_reached`, `search_throttled`). Check GET /usage for used/limit.",
-        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } }
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        }
       }
     }
   },
   "paths": {
     "/search/candidates": {
       "get": {
-        "tags": ["Search"],
+        "tags": [
+          "Search"
+        ],
         "operationId": "searchCandidates",
         "summary": "Search talent database",
         "description": "Structured and/or AI/NLP talent search. Hits carry triage data only (headline, experience, profileSignals, redacted resume excerpt) — no names, email, or phone. Use GET /candidates/{talentCardId} for identity (auto-unlocks).\n\nRequires scope `search:read`. Metered on the workspace searches quota (each page request counts). Rate limits: 10 search + 120 global requests per 60s per API key.",
@@ -159,32 +477,149 @@
           {
             "name": "q",
             "in": "query",
-            "schema": { "type": "string", "maxLength": 500 },
+            "schema": {
+              "type": "string",
+              "maxLength": 500
+            },
             "description": "NLP / AI search query. Rewritten then embedded for semantic ranking. Can be combined with structured filters."
           },
           {
             "name": "inresume",
             "in": "query",
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "description": "Lucene boolean over full resume text. Use quoted phrases, OR within synonym groups, AND between groups, e.g. (\"React\" OR \"React.js\") AND (\"TypeScript\"). This is the way to express skill requirements — there is no separate skills parameter."
           },
-          { "name": "locations", "in": "query", "schema": { "type": "string" }, "description": "Desired work locations (dash-separated, URL-encoded)" },
-          { "name": "currlocation", "in": "query", "schema": { "type": "string" }, "description": "Candidate's current location (same encoding as locations)" },
-          { "name": "minexp", "in": "query", "schema": { "type": "string" }, "description": "Min experience (years, decimal ok)" },
-          { "name": "maxexp", "in": "query", "schema": { "type": "string" }, "description": "Max experience (years)" },
-          { "name": "minsal", "in": "query", "schema": { "type": "string" }, "description": "Min current CTC (INR)" },
-          { "name": "maxsal", "in": "query", "schema": { "type": "string" }, "description": "Max current CTC (INR). Always include to cap results." },
-          { "name": "canjoinin", "in": "query", "schema": { "type": "string" }, "description": "Max days to join (e.g. 30)" },
-          { "name": "onNoticePeriodOrNotWorking", "in": "query", "schema": { "type": "string" }, "description": "true = only candidates on notice period or not working" },
-          { "name": "eduPed", "in": "query", "schema": { "type": "string" }, "description": "Education pedigree tiers, dash-separated: tier1plus (IIT/IIM top), tier1, tier2. Example: tier1plus-tier1" },
-          { "name": "startupExp", "in": "query", "schema": { "type": "string" }, "description": "Startup background, dash-separated: funded_startup, other_startup" },
-          { "name": "not_itExp", "in": "query", "schema": { "type": "string" }, "description": "Exclude IT-services background, dash-separated: largeITServices, otherITServices" },
-          { "name": "entrExp", "in": "query", "schema": { "type": "string" }, "description": "Entrepreneurship background, dash-separated: cofounder, earlyEmployee" },
-          { "name": "domainTags", "in": "query", "schema": { "type": "string" }, "description": "Industry/domain background, dash-separated. Values: banking_and_finance, healthcare, ecommerce, computer_security, travel, edtech_education, gaming, consumer_internet, b2b_saas, software_product, gcc. High-confidence matching is always applied." },
-          { "name": "profileAttributesMode", "in": "query", "schema": { "type": "string", "enum": ["or"] }, "description": "'or' = profile attributes (eduPed, startupExp, entrExp, domainTags) match ANY instead of ALL. Default (omitted): all supplied profile attributes must match." },
-          { "name": "activity", "in": "query", "schema": { "type": "string" }, "description": "Candidate activity recency: active-3-months or active-6-months" },
-          { "$ref": "#/components/parameters/page" },
-          { "$ref": "#/components/parameters/pageSizeLimited" }
+          {
+            "name": "locations",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Desired work locations (dash-separated, URL-encoded)"
+          },
+          {
+            "name": "currlocation",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Candidate's current location (same encoding as locations)"
+          },
+          {
+            "name": "minexp",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Min experience (years, decimal ok)"
+          },
+          {
+            "name": "maxexp",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Max experience (years)"
+          },
+          {
+            "name": "minsal",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Min current CTC (INR)"
+          },
+          {
+            "name": "maxsal",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Max current CTC (INR). Always include to cap results."
+          },
+          {
+            "name": "canjoinin",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Max days to join (e.g. 30)"
+          },
+          {
+            "name": "onNoticePeriodOrNotWorking",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "true = only candidates on notice period or not working"
+          },
+          {
+            "name": "eduPed",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Education pedigree tiers, dash-separated: tier1plus (IIT/IIM top), tier1, tier2. Example: tier1plus-tier1"
+          },
+          {
+            "name": "startupExp",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Startup background, dash-separated: funded_startup, other_startup"
+          },
+          {
+            "name": "not_itExp",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Exclude IT-services background, dash-separated: largeITServices, otherITServices"
+          },
+          {
+            "name": "entrExp",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Entrepreneurship background, dash-separated: cofounder, earlyEmployee"
+          },
+          {
+            "name": "domainTags",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Industry/domain background, dash-separated. Values: banking_and_finance, healthcare, ecommerce, computer_security, travel, edtech_education, gaming, consumer_internet, b2b_saas, software_product, gcc. High-confidence matching is always applied."
+          },
+          {
+            "name": "profileAttributesMode",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "or"
+              ]
+            },
+            "description": "'or' = profile attributes (eduPed, startupExp, entrExp, domainTags) match ANY instead of ALL. Default (omitted): all supplied profile attributes must match."
+          },
+          {
+            "name": "activity",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Candidate activity recency: active-3-months or active-6-months"
+          },
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSizeLimited"
+          }
         ],
         "responses": {
           "200": {
@@ -196,51 +631,93 @@
                   "properties": {
                     "results": {
                       "type": "array",
-                      "items": { "$ref": "#/components/schemas/SearchCandidateHit" }
+                      "items": {
+                        "$ref": "#/components/schemas/SearchCandidateHit"
+                      }
                     },
-                    "page": { "type": "integer" },
-                    "pageSize": { "type": "integer", "description": "Requested page size (default 10, max 20)" },
-                    "totalCount": { "type": "integer" },
-                    "searchType": { "type": "string", "enum": ["structured", "ai"] }
+                    "page": {
+                      "type": "integer"
+                    },
+                    "pageSize": {
+                      "type": "integer",
+                      "description": "Requested page size (default 10, max 20)"
+                    },
+                    "totalCount": {
+                      "type": "integer"
+                    },
+                    "searchType": {
+                      "type": "string",
+                      "enum": [
+                        "structured",
+                        "ai"
+                      ]
+                    }
                   }
                 }
               }
             }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" },
-          "403": { "$ref": "#/components/responses/Forbidden" },
-          "429": { "$ref": "#/components/responses/TooManyRequests" }
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
         }
       }
     },
     "/candidates/{talentCardId}": {
       "get": {
-        "tags": ["Candidates"],
+        "tags": [
+          "Candidates"
+        ],
         "operationId": "getCandidateDetail",
         "summary": "Get candidate detail (auto-unlock)",
         "description": "Returns full candidate identity, the actual resume (text + signed file download URL), and structured profile. If the candidate is locked for your workspace, this call unlocks them first — spending **one unlock credit** against the workspace unlock quota (check GET /usage). Already-unlocked candidates are never re-charged.\n\nRequires scope `candidates:read` (eval + production keys). Rate limits: 30 sensitiveRead + 120 global requests per 60s per API key.",
         "parameters": [
-          { "name": "talentCardId", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "talentCardId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
             "description": "Unlocked candidate detail",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/CandidateDetail" }
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateDetail"
+                }
               }
             }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" },
-          "403": { "$ref": "#/components/responses/Forbidden" },
-          "404": { "$ref": "#/components/responses/NotFound" },
-          "429": { "$ref": "#/components/responses/TooManyRequests" }
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
         }
       }
     },
     "/jobs": {
       "get": {
-        "tags": ["Jobs"],
+        "tags": [
+          "Jobs"
+        ],
         "operationId": "listJobs",
         "summary": "List workspace jobs",
         "description": "Lists your workspace's jobs. Requires scope `jobs:read` (production keys).",
@@ -249,10 +726,17 @@
             "name": "includePaused",
             "in": "query",
             "description": "Default false: active jobs only. Set true to also include paused jobs.",
-            "schema": { "type": "boolean", "default": false }
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           },
-          { "$ref": "#/components/parameters/page" },
-          { "$ref": "#/components/parameters/pageSizeLimited" }
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSizeLimited"
+          }
         ],
         "responses": {
           "200": {
@@ -262,18 +746,33 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "page": { "type": "integer" },
-                    "pageSize": { "type": "integer" },
-                    "totalCount": { "type": "integer" },
+                    "page": {
+                      "type": "integer"
+                    },
+                    "pageSize": {
+                      "type": "integer"
+                    },
+                    "totalCount": {
+                      "type": "integer"
+                    },
                     "results": {
                       "type": "array",
                       "items": {
                         "type": "object",
                         "properties": {
-                          "jobId": { "type": "string" },
-                          "title": { "type": "string" },
-                          "status": { "type": "string" },
-                          "createdAt": { "type": "string", "format": "date-time" }
+                          "jobId": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
                         }
                       }
                     }
@@ -282,12 +781,18 @@
               }
             }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" },
-          "403": { "$ref": "#/components/responses/Forbidden" }
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
         }
       },
       "post": {
-        "tags": ["Jobs"],
+        "tags": [
+          "Jobs"
+        ],
         "operationId": "createJob",
         "summary": "Post a job",
         "description": "Creates a fully configured job from minimal input: skills/tags derived from the JD, screening questionnaire auto-attached, and auto-outreach to matching candidates enabled. After posting, the job is reviewed and then goes live — typically ~30 minutes on business days; matching-candidate outreach starts once approved. Key requirement importance is honoured exactly as sent — we strongly recommend at most 3 `must_have` items (over-tight configs shrink outreach reach).\n\nRequires scope `jobs:write` (production keys). Rate limits: 5 createJob + 120 global requests per 60s per API key.",
@@ -297,17 +802,34 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["title", "remoteType", "experienceRange", "salaryRange", "jobDescription"],
+                "required": [
+                  "title",
+                  "remoteType",
+                  "experienceRange",
+                  "salaryRange",
+                  "jobDescription"
+                ],
                 "properties": {
-                  "title": { "type": "string", "maxLength": 80, "example": "Senior Data Engineer" },
+                  "title": {
+                    "type": "string",
+                    "maxLength": 80,
+                    "example": "Senior Data Engineer"
+                  },
                   "remoteType": {
                     "type": "string",
-                    "enum": ["remote_only", "remote_okay", "remote_not_okay"],
+                    "enum": [
+                      "remote_only",
+                      "remote_okay",
+                      "remote_not_okay"
+                    ],
                     "description": "locations is required unless remote_only"
                   },
                   "roleType": {
                     "type": "string",
-                    "enum": ["full_time", "internship"],
+                    "enum": [
+                      "full_time",
+                      "internship"
+                    ],
                     "default": "full_time"
                   },
                   "teamId": {
@@ -319,36 +841,85 @@
                     "default": false,
                     "description": "Hide the salary range on the public job page"
                   },
+                  "mandatorySkillsMatchType": {
+                    "type": "string",
+                    "enum": [
+                      "any",
+                      "all"
+                    ],
+                    "default": "any",
+                    "description": "How derived must-have skills gate matching: any = match any of them; all = match all of them. Defaults to any when omitted (same as the job-setup UI)."
+                  },
                   "locations": {
                     "type": "array",
-                    "items": { "type": "string" },
+                    "items": {
+                      "type": "string"
+                    },
                     "maxItems": 5,
                     "description": "Plain city names, canonicalized server-side",
-                    "example": ["Bangalore", "Pune"]
+                    "example": [
+                      "Bangalore",
+                      "Pune"
+                    ]
                   },
                   "experienceRange": {
                     "type": "object",
-                    "required": ["min", "max"],
-                    "properties": { "min": { "type": "number" }, "max": { "type": "number" } },
+                    "required": [
+                      "min",
+                      "max"
+                    ],
+                    "properties": {
+                      "min": {
+                        "type": "number"
+                      },
+                      "max": {
+                        "type": "number"
+                      }
+                    },
                     "description": "Years of experience"
                   },
                   "salaryRange": {
                     "type": "object",
-                    "required": ["min", "max"],
-                    "properties": { "min": { "type": "number" }, "max": { "type": "number" } },
+                    "required": [
+                      "min",
+                      "max"
+                    ],
+                    "properties": {
+                      "min": {
+                        "type": "number"
+                      },
+                      "max": {
+                        "type": "number"
+                      }
+                    },
                     "description": "INR per annum (2500000 = 25 LPA)"
                   },
-                  "jobDescription": { "type": "string", "maxLength": 20000 },
+                  "jobDescription": {
+                    "type": "string",
+                    "maxLength": 20000
+                  },
                   "keyRequirements": {
                     "type": "array",
                     "maxItems": 8,
                     "description": "Optional; defaults generated from the JD when omitted. Importance honoured as sent; strongly recommend at most 3 must_have.",
                     "items": {
                       "type": "object",
-                      "required": ["requirement"],
+                      "required": [
+                        "requirement"
+                      ],
                       "properties": {
-                        "requirement": { "type": "string", "maxLength": 300 },
-                        "importance": { "type": "string", "enum": ["must_have", "nice_to_have"], "default": "nice_to_have" }
+                        "requirement": {
+                          "type": "string",
+                          "maxLength": 300
+                        },
+                        "importance": {
+                          "type": "string",
+                          "enum": [
+                            "must_have",
+                            "nice_to_have"
+                          ],
+                          "default": "nice_to_have"
+                        }
                       }
                     }
                   }
@@ -365,54 +936,144 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "jobId": { "type": "string" },
-                    "publicUrl": { "type": "string", "nullable": true },
-                    "status": { "type": "string", "example": "submitted_for_review" },
-                    "title": { "type": "string" },
-                    "remoteType": { "type": "string" },
-                    "roleType": { "type": "string" },
-                    "locations": { "type": "array", "items": { "type": "string" } },
-                    "skills": { "type": "array", "items": { "type": "string" }, "description": "Derived skill taxonomy codes" },
-                    "mandatorySkills": { "type": "array", "items": { "type": "string" } },
+                    "jobId": {
+                      "type": "string"
+                    },
+                    "publicUrl": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "status": {
+                      "type": "string",
+                      "example": "submitted_for_review"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "remoteType": {
+                      "type": "string"
+                    },
+                    "roleType": {
+                      "type": "string"
+                    },
+                    "locations": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "skills": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Derived skill taxonomy codes"
+                    },
+                    "mandatorySkills": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "mandatorySkillsMatchType": {
+                      "type": "string",
+                      "enum": [
+                        "any",
+                        "all"
+                      ],
+                      "description": "Applied must-have skills match mode (defaults to any)"
+                    },
                     "keyRequirements": {
                       "type": "array",
                       "items": {
                         "type": "object",
                         "properties": {
-                          "requirement": { "type": "string" },
-                          "importance": { "type": "string" }
+                          "requirement": {
+                            "type": "string"
+                          },
+                          "importance": {
+                            "type": "string"
+                          }
                         }
                       }
                     },
                     "screeningQuestionnaire": {
                       "type": "object",
-                      "properties": { "attached": { "type": "boolean" }, "questionCount": { "type": "integer" } }
+                      "properties": {
+                        "attached": {
+                          "type": "boolean"
+                        },
+                        "questionCount": {
+                          "type": "integer"
+                        }
+                      }
                     },
                     "autoITA": {
                       "type": "object",
-                      "properties": { "enabled": { "type": "boolean" }, "savedSearchId": { "type": "string", "nullable": true } }
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "savedSearchId": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      }
                     }
                   }
                 }
               }
             }
           },
-          "400": { "description": "Validation / location / team error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } } },
-          "401": { "$ref": "#/components/responses/Unauthorized" },
-          "403": { "$ref": "#/components/responses/Forbidden" },
-          "429": { "$ref": "#/components/responses/TooManyRequests" },
-          "502": { "description": "Upstream job creation failed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } } }
+          "400": {
+            "description": "Validation / location / team error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "502": {
+            "description": "Upstream job creation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
         }
       }
     },
     "/jobs/{jobId}": {
       "delete": {
-        "tags": ["Jobs"],
+        "tags": [
+          "Jobs"
+        ],
         "operationId": "deleteJob",
         "summary": "Delete a job (soft-delete)",
         "description": "Soft-deletes a job the same way the Cutshort UI does. Deleted jobs no longer appear in GET /jobs. Requires `jobs:write`. Optional body: `reason` + `reasonText` (defaults to cleanup / Public API).",
         "parameters": [
-          { "name": "jobId", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "requestBody": {
           "required": false,
@@ -423,10 +1084,19 @@
                 "properties": {
                   "reason": {
                     "type": "string",
-                    "enum": ["hired_on_cs", "hired_outside_cs", "duplicate_job", "not_happy", "other"],
+                    "enum": [
+                      "hired_on_cs",
+                      "hired_outside_cs",
+                      "duplicate_job",
+                      "not_happy",
+                      "other"
+                    ],
                     "default": "duplicate_job"
                   },
-                  "reasonText": { "type": "string", "maxLength": 500 }
+                  "reasonText": {
+                    "type": "string",
+                    "maxLength": 500
+                  }
                 }
               }
             }
@@ -440,38 +1110,78 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
-                    "jobId": { "type": "string" },
-                    "status": { "type": "string", "enum": ["deleted"] }
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "jobId": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "deleted"
+                      ]
+                    }
                   }
                 }
               }
             }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" },
-          "403": { "$ref": "#/components/responses/Forbidden" },
-          "404": { "$ref": "#/components/responses/NotFound" },
-          "502": { "description": "Upstream delete failed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } } }
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "description": "Upstream delete failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
         }
       }
     },
     "/message-candidate": {
       "post": {
-        "tags": ["Messaging"],
+        "tags": [
+          "Messaging"
+        ],
         "operationId": "messageCandidate",
         "summary": "Message a candidate (invite to apply)",
-        "description": "Invites a candidate to apply to one of your jobs, with your custom message attached. Tip: include an interview booking link so interested candidates can pick a slot directly. One invite per (job, candidate) pair — duplicates return 409. Replies land in your Cutshort inbox.\n\nRequires scope `messages:write` (production keys). Metered on the workspace messages quota (check GET /usage). Rate limits: 10 messageCandidate + 120 global requests per 60s per API key.",
+        "description": "Invites a candidate to apply to one of your jobs, with your custom message attached. Tip: include an interview booking link so interested candidates can pick a slot directly. One invite per (job, candidate) pair — if already invited or already in the job pipeline, returns 409 already_exists_in_job_pipeline. Replies land in your Cutshort inbox.\n\nRequires scope `messages:write` (production keys). Metered on the workspace messages quota (check GET /usage). Rate limits: 10 messageCandidate + 120 global requests per 60s per API key.",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["talentCardId", "jobId", "message"],
+                "required": [
+                  "talentCardId",
+                  "jobId",
+                  "message"
+                ],
                 "properties": {
-                  "talentCardId": { "type": "string", "description": "Candidate to invite (from search results)" },
-                  "jobId": { "type": "string", "description": "Your job the candidate is invited to apply for" },
-                  "message": { "type": "string", "maxLength": 3000, "description": "Outreach message; may include links (e.g. an interview booking link)" }
+                  "talentCardId": {
+                    "type": "string",
+                    "description": "Candidate to invite (from search results)"
+                  },
+                  "jobId": {
+                    "type": "string",
+                    "description": "Your job the candidate is invited to apply for"
+                  },
+                  "message": {
+                    "type": "string",
+                    "maxLength": 3000,
+                    "description": "Outreach message; may include links (e.g. an interview booking link)"
+                  }
                 }
               }
             }
@@ -485,27 +1195,65 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
-                    "talentCardId": { "type": "string" },
-                    "jobId": { "type": "string" },
-                    "threadId": { "type": "string", "nullable": true, "description": "Conversation thread created for this invite" }
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "talentCardId": {
+                      "type": "string"
+                    },
+                    "jobId": {
+                      "type": "string"
+                    },
+                    "threadId": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Conversation thread created for this invite"
+                    }
                   }
                 }
               }
             }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" },
-          "403": { "$ref": "#/components/responses/Forbidden" },
-          "404": { "$ref": "#/components/responses/NotFound" },
-          "409": { "description": "Invite already sent for this job + candidate (error_code invite_already_sent)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } } },
-          "429": { "$ref": "#/components/responses/TooManyRequests" },
-          "502": { "description": "Upstream invite failed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } } }
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "Candidate already invited or already in this job pipeline (error_code already_exists_in_job_pipeline)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "502": {
+            "description": "Upstream invite failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
         }
       }
     },
     "/usage": {
       "get": {
-        "tags": ["Usage"],
+        "tags": [
+          "Usage"
+        ],
         "operationId": "getUsage",
         "summary": "API usage meters",
         "description": "Returns the workspace's cycle usage as used/limit meter pairs for unlocks, searches (structured + AI combined), and candidate messages. `cycleEndsOn` is when usage resets; `planExpiresOn` is when the subscription ends (non-free plans). Check before spending unlocks or messages. No special scope — any valid API key.",
@@ -517,19 +1265,246 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "workspaceId": { "type": "string" },
-                    "apiUnlocks": { "$ref": "#/components/schemas/UsageMeter" },
-                    "searches": { "$ref": "#/components/schemas/UsageMeter" },
-                    "messages": { "$ref": "#/components/schemas/UsageMeter" },
-                    "cycleEndsOn": { "type": "string", "nullable": true, "description": "When usage meters reset" },
-                    "planExpiresOn": { "type": "string", "nullable": true, "description": "Subscription expiry (non-free plans)" }
+                    "workspaceId": {
+                      "type": "string"
+                    },
+                    "apiUnlocks": {
+                      "$ref": "#/components/schemas/UsageMeter"
+                    },
+                    "searches": {
+                      "$ref": "#/components/schemas/UsageMeter"
+                    },
+                    "messages": {
+                      "$ref": "#/components/schemas/UsageMeter"
+                    },
+                    "cycleEndsOn": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "When usage meters reset"
+                    },
+                    "planExpiresOn": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Subscription expiry (non-free plans)"
+                    }
                   }
                 }
               }
             }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" }
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
         }
+      }
+    },
+    "/jobs/{jobId}/stages": {
+      "get": {
+        "operationId": "listStagesOfJob",
+        "summary": "List stages for a job (with application counts)",
+        "description": "Returns the job pipeline stages with applicationCount per stage. Use stageId with GET /jobs/{jobId}/applications to list a specific stage. Requires jobs:read.",
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stage list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "stageId": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string",
+                            "description": "e.g. candidates for the applications stage"
+                          },
+                          "order": {
+                            "type": "number"
+                          },
+                          "stagePurpose": {
+                            "type": "string"
+                          },
+                          "applicationCount": {
+                            "type": "integer"
+                          },
+                          "automations": {
+                            "type": "array",
+                            "items": {
+                              "type": "object"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        },
+        "tags": [
+          "Stages"
+        ]
+      }
+    },
+    "/jobs/{jobId}/applications": {
+      "get": {
+        "operationId": "listApplicationsOfJob",
+        "summary": "List applications in a job stage",
+        "description": "Lists applications for one stage (default: applications / candidates). Fitment filter default strong,fair (excludes weak/not_a_fit); pass fitment=strong or fitment=strong,fair,weak. autoUnlock default true unlocks locked candidates on the page (metered); autoUnlock=false returns only already-unlocked applications. Requires applications:read.",
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "stageId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "From GET /jobs/{jobId}/stages. Default: applications stage."
+          },
+          {
+            "name": "fitment",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "strong,fair"
+            },
+            "description": "Comma-separated: strong, fair, weak. Default strong,fair. Rows with no fitment verdict are always included."
+          },
+          {
+            "name": "autoUnlock",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            },
+            "description": "Default true: unlock locked candidates on the page. false: omit locked applications."
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "relevance",
+                "recency"
+              ],
+              "default": "relevance"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSizeLimited"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stage-wise applications page",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "jobId": {
+                      "type": "string"
+                    },
+                    "stages": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "stageId": {
+                            "type": "string"
+                          },
+                          "stageType": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "stageName": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "applications": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/ApplicationRow"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "page": {
+                      "type": "integer"
+                    },
+                    "pageSize": {
+                      "type": "integer"
+                    },
+                    "totalCount": {
+                      "type": "integer"
+                    },
+                    "totalCountIsCapped": {
+                      "type": "boolean"
+                    },
+                    "fetchLimit": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        },
+        "tags": [
+          "Applications"
+        ]
       }
     }
   }

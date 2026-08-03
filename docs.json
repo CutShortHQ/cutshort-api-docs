@@ -42,6 +42,8 @@
               "guides/profile-signals",
               "guides/post-a-job",
               "guides/message-candidate",
+              "guides/list-stages",
+              "guides/list-applications",
               "guides/rate-limits"
             ]
           }

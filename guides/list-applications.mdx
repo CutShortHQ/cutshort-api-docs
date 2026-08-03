@@ -1,0 +1,84 @@
+---
+title: List applications
+description: List candidates in a job stage with fitment filter and optional auto-unlock
+---
+
+`GET /jobs/{jobId}/applications` returns applications in one pipeline stage — by default the **Applications** stage — with triage fields, contact details, resume download URL, and screening Q&A.
+
+Requires scope `applications:read`.
+
+## Request
+
+```
+GET /api/v1/jobs/{jobId}/applications?fitment=strong,fair&autoUnlock=true&page=1&pageSize=10
+```
+
+| Param | Default | Notes |
+| --- | --- | --- |
+| `stageId` | Applications stage | From [List stages](/guides/list-stages). Omit to use the applications stage. |
+| `fitment` | `strong,fair` | Comma-separated: `strong`, `fair`, `weak`. Rows with no AI fitment verdict are always included. |
+| `autoUnlock` | `true` | Unlock locked candidates on the page (spends unlock credits). `false` returns **only already-unlocked** applications. |
+| `sort` | `relevance` | `relevance` or `recency` |
+| `page` / `pageSize` | `1` / `10` | Max pageSize 20 |
+
+### Fitment
+
+| Alias | Internal value | When to use |
+| --- | --- | --- |
+| `strong` | `strong_fit` | Tight shortlist when the pool is large |
+| `fair` | `maybe_a_fit` | Included in the default |
+| `weak` | `not_a_fit` | Include when the pool is thin |
+
+Default `strong,fair` excludes weak / not-a-fit.
+
+### Auto-unlock
+
+With `autoUnlock=true` (default), every locked candidate on the **returned page** is unlocked first (same metering as [Get candidate details](/guides/get-candidate-details)). If remaining unlock quota is less than the number of locked candidates on that page, the call returns **429** `api_unlock_limit_reached` and unlocks nothing.
+
+With `autoUnlock=false`, locked applications are omitted — you only get candidates already unlocked for your workspace. No unlock credits are spent.
+
+## Response
+
+```json
+{
+  "jobId": "…",
+  "stages": [
+    {
+      "stageId": "…",
+      "stageType": "candidates",
+      "stageName": "Applications",
+      "applications": [
+        {
+          "applicationId": "…",
+          "talentCardId": "…",
+          "displayName": "…",
+          "email": "…",
+          "phone": "…",
+          "headline": "…",
+          "joiningAvailability": {
+            "status": "on_notice_period",
+            "noticePeriodEndsOn": "2026-09-01T00:00:00.000Z",
+            "canJoinHowSoonDays": null
+          },
+          "lastSeen": "2026-08-01T12:00:00.000Z",
+          "relevance": { "fitment": "strong_fit", "fitmentReason": "…", "shortlistingCriteriaScore": 3 },
+          "originalResumeDownloadUrl": "…",
+          "screeningQuestions": [],
+          "unlockedNow": true
+        }
+      ]
+    }
+  ],
+  "page": 1,
+  "pageSize": 10,
+  "totalCount": 12
+}
+```
+
+The `stages` array is shaped so multiple stages can be returned later; today it always contains the one requested stage.
+
+## Typical flow after outreach
+
+1. [Message candidates](/guides/message-candidate) with invites to apply
+2. Later: list applications on the job (default stage) to see who applied
+3. Optionally [list stages](/guides/list-stages) if you need counts in other pipeline stages

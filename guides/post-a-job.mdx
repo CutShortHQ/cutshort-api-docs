@@ -19,6 +19,7 @@ description: Create a job with auto-configured pipeline and outreach
   "experienceRange": { "min": 4, "max": 8 },
   "salaryRange": { "min": 2500000, "max": 4500000 },
   "hideSalary": false,
+  "mandatorySkillsMatchType": "any",
   "roleType": "full_time",
   "jobDescription": "Full JD text…",
   "keyRequirements": [
@@ -44,6 +45,7 @@ description: Create a job with auto-configured pipeline and outreach
 | `experienceRange` | Yes | `{ min, max }` in years |
 | `salaryRange` | Yes | INR per annum (`2500000` = ₹25 LPA) |
 | `hideSalary` | No | `true` hides the salary range on the public job page (default `false`) |
+| `mandatorySkillsMatchType` | No | How derived must-have skills gate matching: `any` (match any) or `all` (match all). Defaults to `any` when omitted (same as the job-setup UI). Always persisted so the job can be edited later in Cutshort. |
 | `roleType` | No | `full_time` (default) or `internship` |
 | `jobDescription` | Yes | Max 20,000 characters |
 | `keyRequirements` | No | Max 8 items |
