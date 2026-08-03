@@ -80,8 +80,8 @@
         "href": "https://cutshort.io"
       },
       {
-        "label": "Request API access",
-        "href": "https://cutshort.io/profile/hiring-settings/integrations"
+        "label": "Get your API Key",
+        "href": "https://developers.cutshort.io/introduction#getting-api-access"
       }
     ]
   },
