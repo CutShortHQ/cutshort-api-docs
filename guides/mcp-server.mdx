@@ -1,0 +1,118 @@
+---
+title: MCP Server
+description: Connect Claude, Cursor, or any MCP client to Cutshort
+---
+
+The Cutshort [MCP](https://modelcontextprotocol.io) server gives AI agents programmatic access to talent search, candidate detail, job posting, and outreach — using the same API key and quotas as the [REST API](/introduction).
+
+**Endpoint:** `https://mcp.cutshort.io/mcp`
+
+The server is a thin proxy: it holds no keys and forwards your `Authorization` header to `https://cutshort.io/api/v1` on every call.
+
+<Note>
+  You need a Cutshort API key (`cs_live_…`) first. Approved employers can generate one under **Settings → Integrations → API Key** — start with **Eval access**. See [Getting API access](/introduction#getting-api-access).
+</Note>
+
+## Connect from Claude Desktop
+
+Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS):
+
+```json
+{
+  "mcpServers": {
+    "cutshort": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://mcp.cutshort.io/mcp",
+        "--header",
+        "Authorization: Bearer cs_live_<your-api-key>"
+      ]
+    }
+  }
+}
+```
+
+Restart Claude Desktop. You should see **cutshort** in the tool list. Requires Node.js 18+.
+
+## Connect from Cursor
+
+In **Cursor Settings → MCP**, add:
+
+```json
+{
+  "cutshort": {
+    "url": "https://mcp.cutshort.io/mcp",
+    "headers": {
+      "Authorization": "Bearer cs_live_<your-api-key>"
+    }
+  }
+}
+```
+
+## Connect with mcp-remote (CLI)
+
+```bash
+npx mcp-remote https://mcp.cutshort.io/mcp \
+  --header "Authorization: Bearer $CUTSHORT_API_KEY"
+```
+
+## Eval vs production keys
+
+| | Eval key | Production key |
+| --- | --- | --- |
+| Search & candidate detail | Yes (small quotas) | Yes |
+| Post jobs, invite to apply, delete jobs | No | Yes |
+| Typical use | Try MCP before buying | Full sourcing → outreach loop |
+
+Tool registration is scope-aware: the server reads `GET /capabilities` at connect time and only exposes tools your key can use.
+
+## Available tools
+
+| Tool | Eval | Production | Notes |
+| --- | --- | --- | --- |
+| `get_usage` | ✓ | ✓ | Check quotas before bulk unlock |
+| `kickstart_sourcing` | ✓ | ✓ | Recommended first step for a new search |
+| `search_candidates` | ✓ | ✓ | Full filter control — see [Search guide](/guides/search-candidates) |
+| `get_searched_candidate` | ✓ | ✓ | Auto-unlocks (1 credit) — confirm before bulk fetch |
+| `list_jobs` | ✓ | ✓ | |
+| `list_applications` | ✓ | ✓ | Applications stage; `autoUnlock` defaults to true |
+| `post_job` | — | ✓ | Reviewed then live (~30 min on business days) |
+| `invite_to_apply` | — | ✓ | Invite shortlisted candidates — confirm first |
+| `delete_job` | — | ✓ | Soft-delete — confirm first |
+
+Pipeline stage moves are **not** in MCP — use the Cutshort website or the REST API for that.
+
+### Agent resource
+
+At session start, agents can read **`cutshort://agent-guide`** — deep reference on search filters, profile signals, auto-unlock, pagination, and error codes. Same content as `GET /api/v1/agent-guide`.
+
+## Starter prompt
+
+Try this after connecting:
+
+> I'm hiring a senior backend engineer in Bangalore, 4–8 years, strong on Go and Kubernetes, 25–45 LPA. Search Cutshort and show me the top matches with headline, experience, and a short fit reason from the resume text.
+
+With a **production key**, you can extend the flow: post a job, invite shortlisted candidates to apply, then `list_applications` to see who responded. See [Invite to apply](/guides/invite-to-apply) and [List applications](/guides/list-applications).
+
+## Optional: On-Behalf-Of
+
+To attribute agent actions to a specific workspace member, add an `On-Behalf-Of: <cutshort-user-id>` header alongside `Authorization`:
+
+```bash
+npx mcp-remote https://mcp.cutshort.io/mcp \
+  --header "Authorization: Bearer $CUTSHORT_API_KEY" \
+  --header "On-Behalf-Of: $RECRUITER_USER_ID"
+```
+
+## Security
+
+- Treat API keys like passwords — do not commit them or paste them in public chats.
+- `get_searched_candidate` auto-unlocks locked candidates (1 credit each).
+- Write tools (`post_job`, `invite_to_apply`, `delete_job`) instruct agents to confirm with you before calling.
+
+## Support
+
+For API or MCP integration help, email [engineering@cutshort.io](mailto:engineering@cutshort.io?subject=Cutshort%20MCP%20support) from the email on your Cutshort account.
+
+Source code: [github.com/CutShortHQ/cutshort-mcp](https://github.com/CutShortHQ/cutshort-mcp)

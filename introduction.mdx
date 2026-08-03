@@ -5,7 +5,7 @@ description: Search India's tech talent with the Cutshort Public API
 
 The Cutshort Public API lets you **search India's tech talent database, hire from it, and reach out to candidates** from your product, internal tools, AI agents, or automation scripts.
 
-Prefer an AI agent in Claude or Cursor? Connect the Cutshort MCP server with your API key (see the MCP package README). This site is the REST reference with an interactive playground.
+Prefer an AI agent in Claude or Cursor? Connect the Cutshort MCP server with your API key — see [MCP Server](/guides/mcp-server). This site is the REST reference with an interactive playground.
 
 ## What's in v1
 
@@ -15,12 +15,12 @@ Prefer an AI agent in Claude or Cursor? Connect the Cutshort MCP server with you
 | [`GET /candidates/{talentCardId}`](/api-reference/candidates/get-candidate-detail) | Full candidate detail — **auto-unlocks** locked candidates (spends one credit) |
 | [`GET /jobs`](/api-reference/jobs/list-jobs) | List your workspace's jobs |
 | [`POST /jobs`](/api-reference/jobs/create-job) | Post a job with auto-configured pipeline and outreach |
-| [`POST /message-candidate`](/api-reference/messaging/message-candidate) | Invite a candidate to apply to your job, with a custom message |
+| [`POST /invite-to-apply`](/api-reference/outreach/invite-to-apply) | Invite a candidate to apply to your job, with a custom message |
 | [`GET /jobs/{jobId}/stages`](/guides/list-stages) | Pipeline stages with application counts |
 | [`GET /jobs/{jobId}/applications`](/guides/list-applications) | Applications in a stage (default: Applications) |
 | [`GET /usage`](/api-reference/usage/get-usage) | Usage meters — `used`/`limit` for unlocks, searches, messages |
 
-**The core loop:** search candidates → get details for your shortlist (auto-unlock) → post a job → message candidates to apply → list applications later.
+**The core loop:** search candidates → get details for your shortlist (auto-unlock) → post a job → invite candidates to apply → list applications later.
 
 ## Base URL
 
@@ -75,7 +75,10 @@ For API questions, integration help, or quota issues, email **[engineering@cutsh
   <Card title="Candidate details" icon="user" href="/guides/get-candidate-details">
     Contact info, resume file, and auto-unlock credits
   </Card>
-  <Card title="Message a candidate" icon="paper-plane" href="/guides/message-candidate">
+  <Card title="Invite to apply" icon="paper-plane" href="/guides/invite-to-apply">
     Invite shortlisted candidates to apply to your job
+  </Card>
+  <Card title="MCP Server" icon="robot" href="/guides/mcp-server">
+    Connect Claude or Cursor to Cutshort
   </Card>
 </CardGroup>

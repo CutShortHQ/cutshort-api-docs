@@ -18,7 +18,7 @@ Every authenticated request consumes the **global** limit. Some routes also cons
 | **search** | 10 | 120s | `GET /search/candidates` |
 | **sensitiveRead** | 30 | 60s | `GET /candidates/{talentCardId}` |
 | **createJob** | 5 | 300s | `POST /jobs` |
-| **messageCandidate** | 10 | 120s | `POST /message-candidate` |
+| **inviteToApply** | 10 | 120s | `POST /invite-to-apply` |
 
 ### On rate limit exceeded
 
@@ -41,7 +41,7 @@ Workspace-level running totals, reset each usage cycle. Defaults (production wor
 | --- | --- | --- | --- |
 | `apiUnlocks` | 10 | `GET /candidates/{id}` on a **locked** candidate (auto-unlock) | `api_unlock_limit_reached` |
 | `searches` | 100 | `GET /search/candidates` (each page request) | `api_search_limit_reached` |
-| `messages` | 20 | `POST /message-candidate` | `api_message_limit_reached` |
+| `messages` | 20 | `POST /invite-to-apply` | `api_message_limit_reached` |
 
 Quota errors are also HTTP **429**, but retrying does not help — the meter resets at `cycleEndsOn`, or contact Cutshort for a higher grant.
 

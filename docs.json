@@ -37,17 +37,22 @@
           {
             "group": "Guides",
             "pages": [
+              "guides/mcp-server",
               "guides/search-candidates",
               "guides/get-candidate-details",
               "guides/profile-signals",
               "guides/post-a-job",
-              "guides/message-candidate",
+              "guides/invite-to-apply",
               "guides/list-stages",
               "guides/list-applications",
               "guides/rate-limits"
             ]
           }
         ]
+      },
+      {
+        "tab": "MCP Server",
+        "pages": ["guides/mcp-server"]
       },
       {
         "tab": "API Reference",

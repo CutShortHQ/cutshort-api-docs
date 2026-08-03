@@ -30,7 +30,7 @@
       "description": "Job posting and listing"
     },
     {
-      "name": "Messaging",
+      "name": "Outreach",
       "description": "Candidate outreach (invite to apply)"
     },
     {
@@ -1149,14 +1149,14 @@
         }
       }
     },
-    "/message-candidate": {
+    "/invite-to-apply": {
       "post": {
         "tags": [
-          "Messaging"
+          "Outreach"
         ],
-        "operationId": "messageCandidate",
-        "summary": "Message a candidate (invite to apply)",
-        "description": "Invites a candidate to apply to one of your jobs, with your custom message attached. Tip: include an interview booking link so interested candidates can pick a slot directly. One invite per (job, candidate) pair — if already invited or already in the job pipeline, returns 409 already_exists_in_job_pipeline. Replies land in your Cutshort inbox.\n\nRequires scope `messages:write` (production keys). Metered on the workspace messages quota (check GET /usage). Rate limits: 10 messageCandidate + 120 global requests per 60s per API key.",
+        "operationId": "inviteToApply",
+        "summary": "Invite a candidate to apply",
+        "description": "Invites a candidate to apply to one of your jobs, with your custom message attached. Tip: include an interview booking link so interested candidates can pick a slot directly. One invite per (job, candidate) pair — if already invited or already in the job pipeline, returns 409 already_exists_in_job_pipeline. Replies land in your Cutshort inbox.\n\nRequires scope `messages:write` (production keys). Metered on the workspace messages quota (check GET /usage). Rate limits: 10 inviteToApply + 120 global requests per 60s per API key.",
         "requestBody": {
           "required": true,
           "content": {
