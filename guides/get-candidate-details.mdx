@@ -53,7 +53,6 @@ GET /api/v1/candidates/{talentCardId}
   "lockStatus": "unlocked",
   "unlockedNow": true,
   "displayName": "Priya Sharma",
-  "headline": "Senior Backend Engineer · Python",
   "email": "priya@example.com",
   "phone": "+919876543210",
   "originalResumeFileName": "Priya_Sharma_Resume.pdf",
@@ -95,7 +94,9 @@ curl -s "https://cutshort.io/api/v1/usage" \
 }
 ```
 
-When credits are exhausted, `GET /candidates/{id}` on a locked candidate returns **429** with `error_code: api_unlock_limit_reached`. Already-unlocked candidates keep working.
+When API credits are exhausted, `GET /candidates/{id}` on a locked candidate returns **429** with `error_code: api_unlock_limit_reached`. Already-unlocked candidates keep working.
+
+If the API quota still shows remaining credits but unlock fails, the workspace's **product plan unlock pool** may be exhausted. This returns `429 plan_unlock_limit_reached` — a separate limit from the API quota.
 
 ## Example — search, then fetch
 

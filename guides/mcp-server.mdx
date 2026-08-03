@@ -10,7 +10,7 @@ The Cutshort [MCP](https://modelcontextprotocol.io) server gives AI agents progr
 The server is a thin proxy: it holds no keys and forwards your `Authorization` header to `https://cutshort.io/api/v1` on every call.
 
 <Note>
-  You need a Cutshort API key (`cs_live_…`) first. Approved employers can generate one under **Settings → Integrations → API Key** — start with **Eval access**. See [Getting API access](/introduction#getting-api-access).
+  You need a Cutshort API key (`cs_live_…`) first. Approved employers can generate one at [Settings → Integrations → API Key](https://cutshort.io/profile/hiring-settings/integrations) — start with **Eval access**. See [Getting API access](/introduction#getting-api-access).
 </Note>
 
 ## Connect from Claude Desktop
@@ -94,16 +94,6 @@ Try this after connecting:
 > I'm hiring a senior backend engineer in Bangalore, 4–8 years, strong on Go and Kubernetes, 25–45 LPA. Search Cutshort and show me the top matches with headline, experience, and a short fit reason from the resume text.
 
 With a **production key**, you can extend the flow: post a job, invite shortlisted candidates to apply, then `list_applications` to see who responded. See [Invite to apply](/guides/invite-to-apply) and [List applications](/guides/list-applications).
-
-## Optional: On-Behalf-Of
-
-To attribute agent actions to a specific workspace member, add an `On-Behalf-Of: <cutshort-user-id>` header alongside `Authorization`:
-
-```bash
-npx mcp-remote https://mcp.cutshort.io/mcp \
-  --header "Authorization: Bearer $CUTSHORT_API_KEY" \
-  --header "On-Behalf-Of: $RECRUITER_USER_ID"
-```
 
 ## Security
 

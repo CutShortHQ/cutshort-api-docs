@@ -4,12 +4,12 @@ description: Your first talent search in two minutes
 ---
 
 <Note>
-  You need an API key first. Approved employers can generate one under **Settings → Integrations → API Key** — start with **Eval access**. See [Getting API access](/introduction#getting-api-access).
+  You need an API key first. Approved employers can generate one at [Settings → Integrations → API Key](https://cutshort.io/profile/hiring-settings/integrations) — start with **Eval access**. See [Getting API access](/introduction#getting-api-access).
 </Note>
 
 ## 1. Generate an API key
 
-1. Open **Settings → Integrations → API Key**
+1. Open [Settings → Integrations → API Key](https://cutshort.io/profile/hiring-settings/integrations)
 2. Select **Eval access** — available to all approved employers
 3. Click **Generate API key**
 4. Copy the `cs_live_…` value from the confirmation modal
@@ -54,7 +54,7 @@ resp.raise_for_status()
 data = resp.json()
 print(f"Found {data['totalCount']} matches, showing {len(data['results'])} on page 1")
 for hit in data["results"]:
-    print(hit["headline"], hit["experience"], "yrs")
+    print(hit["experience"], "yrs", hit.get("currentCompany", ""))
 ```
 
 ```javascript JavaScript
@@ -83,7 +83,6 @@ console.log(data.totalCount, data.results.length);
   "results": [
     {
       "talentCardId": "…",
-      "headline": "Senior Backend Engineer · Python · Django",
       "experience": 6,
       "currentSalary": 2800000,
       "profileSignals": {

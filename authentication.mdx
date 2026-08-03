@@ -15,14 +15,14 @@ Content-Type: application/json
 | Step | Detail |
 | --- | --- |
 | **Prerequisite** | Be an **approved employer** on Cutshort (see [Introduction](/introduction#getting-api-access)) |
-| **In the product** | **Settings → Integrations → API Key** |
+| **In the product** | [Settings → Integrations → API Key](https://cutshort.io/profile/hiring-settings/integrations) |
 | **Generate** | Choose **Eval access** or **Production access**, then click **Generate API key** |
 
 When generating a key you choose:
 
 | Option | Availability | Scopes |
 | --- | --- | --- |
-| **Eval access** (limited quotas) | All approved employers | `search:read`, `candidates:read` |
+| **Eval access** (limited quotas) | All approved employers | `search:read`, `candidates:read`, `applications:read`, `jobs:read` |
 | **Production access** (all scopes) | Workspace has production API enabled | Adds job posting (`jobs:write`) and candidate messaging (`messages:write`), with higher quotas |
 
 Production self-serve requires Cutshort to enable access on your workspace. Email **[hello@cutshort.io](mailto:hello@cutshort.io?subject=Cutshort%20API%20production%20access%20request)** to request it.
@@ -45,20 +45,11 @@ Each key carries a set of **scopes** that control which endpoints it can call. I
 | --- | --- |
 | `GET /search/candidates` | `search:read` (eval + production) |
 | `GET /candidates/{talentCardId}` | `candidates:read` (eval + production; auto-unlock is metered by the workspace unlock quota) |
-| `GET /jobs` | `jobs:read` (production keys) |
+| `GET /jobs` | `jobs:read` (eval + production) |
+| `GET /jobs/{jobId}/stages` | `jobs:read` (eval + production) |
 | `POST /jobs` | `jobs:write` (production keys) |
 | `POST /invite-to-apply` | `messages:write` (production keys) |
 | `GET /usage` | Any valid key |
-
-## Optional — act on behalf of a user
-
-Some workspace actions attribute to a specific recruiter:
-
-```http
-On-Behalf-Of: <cutshort-user-id>
-```
-
-Pass this alongside `Authorization` when your integration tracks per-user actions.
 
 ## Errors
 

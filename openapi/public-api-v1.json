@@ -3,7 +3,7 @@
   "info": {
     "title": "Cutshort Public API v1",
     "version": "1.0.0",
-    "description": "Programmatic access to Cutshort's tech talent database. All endpoints require `Authorization: Bearer cs_live_<key>`.\n\n**Core flow:** search candidates → get candidate details (auto-unlock) → post a job → message candidates to apply → list applications (optional: list stages)."
+    "description": "Programmatic access to Cutshort's tech talent database. All endpoints require `Authorization: Bearer cs_live_<key>`.\n\n**Core flow:** search candidates \u2192 get candidate details (auto-unlock) \u2192 post a job \u2192 message candidates to apply \u2192 list applications (optional: list stages)."
   },
   "servers": [
     {
@@ -51,7 +51,7 @@
       "ApiKeyAuth": {
         "type": "http",
         "scheme": "bearer",
-        "description": "Workspace-scoped API key. Prefix: `cs_live_`. Eval keys (self-serve from Cutshort → Settings → Integrations → API Key) can search and get candidate details within small quotas; production keys add job posting and candidate messaging with higher limits."
+        "description": "Workspace-scoped API key. Prefix: `cs_live_`. Eval keys (self-serve from Cutshort \u2192 Settings \u2192 Integrations \u2192 API Key) can search and get candidate details within small quotas; production keys add job posting and candidate messaging with higher limits."
       }
     },
     "parameters": {
@@ -156,12 +156,9 @@
       },
       "SearchCandidateHit": {
         "type": "object",
-        "description": "Index-served search hit. No identity or lock fields — use GET /candidates/{talentCardId} for identity (auto-unlocks).",
+        "description": "Index-served search hit. No identity or lock fields \u2014 use GET /candidates/{talentCardId} for identity (auto-unlocks).",
         "properties": {
           "talentCardId": {
-            "type": "string"
-          },
-          "headline": {
             "type": "string"
           },
           "experience": {
@@ -182,7 +179,19 @@
             "type": "string"
           },
           "joiningAvailability": {
-            "$ref": "#/components/schemas/JoiningAvailability"
+            "type": "object",
+            "description": "Joining availability. status is immediate | on_notice_period | not_resigned (or null if unknown). canJoinHowSoonDays is not included on search hits.",
+            "properties": {
+              "status": {
+                "type": "string",
+                "nullable": true
+              },
+              "noticePeriodEndsOn": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
+              }
+            }
           },
           "currentSalary": {
             "type": "number",
@@ -193,7 +202,7 @@
             "items": {
               "type": "string"
             },
-            "description": "Compact work history, most recent first (max 8), e.g. \"Senior Engineer — Flipkart (2021–2024)\""
+            "description": "Compact work history, most recent first (max 8), e.g. \"Senior Engineer \u2014 Flipkart (2021\u20132024)\""
           },
           "education": {
             "type": "array",
@@ -238,9 +247,6 @@
           "displayName": {
             "type": "string"
           },
-          "headline": {
-            "type": "string"
-          },
           "email": {
             "type": "string",
             "nullable": true
@@ -254,7 +260,7 @@
           },
           "originalResumeDownloadUrl": {
             "type": "string",
-            "description": "Signed URL to download the candidate's actual resume file. Expires after 1 hour — re-fetch for a fresh link (free once unlocked)."
+            "description": "Signed URL to download the candidate's actual resume file. Expires after 1 hour \u2014 re-fetch for a fresh link (free once unlocked)."
           },
           "profile": {
             "type": "object",
@@ -472,14 +478,14 @@
         ],
         "operationId": "searchCandidates",
         "summary": "Search talent database",
-        "description": "Structured and/or AI/NLP talent search. Hits carry triage data only (headline, experience, profileSignals, redacted resume excerpt) — no names, email, or phone. Use GET /candidates/{talentCardId} for identity (auto-unlocks).\n\nRequires scope `search:read`. Metered on the workspace searches quota (each page request counts). Rate limits: 10 search + 120 global requests per 60s per API key.",
+        "description": "Structured and/or AI/NLP talent search. Hits carry triage data only (headline, experience, profileSignals, redacted resume excerpt) \u2014 no names, email, or phone. Use GET /candidates/{talentCardId} for identity (auto-unlocks).\n\nRequires scope `search:read`. Metered on the workspace searches quota (each page request counts). Rate limits: 10 search + 120 global requests per 60s per API key. At least one search filter is required (q, inresume, locations, experience, salary, profile attributes, or activity); bare pagination-only requests return 400 search_criteria_required.",
         "parameters": [
           {
             "name": "q",
             "in": "query",
             "schema": {
               "type": "string",
-              "maxLength": 500
+              "maxLength": 50000
             },
             "description": "NLP / AI search query. Rewritten then embedded for semantic ranking. Can be combined with structured filters."
           },
@@ -489,7 +495,7 @@
             "schema": {
               "type": "string"
             },
-            "description": "Lucene boolean over full resume text. Use quoted phrases, OR within synonym groups, AND between groups, e.g. (\"React\" OR \"React.js\") AND (\"TypeScript\"). This is the way to express skill requirements — there is no separate skills parameter."
+            "description": "Lucene boolean over full resume text. Use quoted phrases, OR within synonym groups, AND between groups, e.g. (\"React\" OR \"React.js\") AND (\"TypeScript\"). This is the way to express skill requirements \u2014 there is no separate skills parameter."
           },
           {
             "name": "locations",
@@ -676,7 +682,7 @@
         ],
         "operationId": "getCandidateDetail",
         "summary": "Get candidate detail (auto-unlock)",
-        "description": "Returns full candidate identity, the actual resume (text + signed file download URL), and structured profile. If the candidate is locked for your workspace, this call unlocks them first — spending **one unlock credit** against the workspace unlock quota (check GET /usage). Already-unlocked candidates are never re-charged.\n\nRequires scope `candidates:read` (eval + production keys). Rate limits: 30 sensitiveRead + 120 global requests per 60s per API key.",
+        "description": "Returns full candidate identity, the actual resume (text + signed file download URL), and structured profile. If the candidate is locked for your workspace, this call unlocks them first \u2014 spending **one unlock credit** against the workspace unlock quota (check GET /usage). Already-unlocked candidates are never re-charged.\n\nRequires scope `candidates:read` (eval + production keys). Rate limits: 30 sensitiveRead + 120 global requests per 60s per API key.",
         "parameters": [
           {
             "name": "talentCardId",
@@ -720,7 +726,7 @@
         ],
         "operationId": "listJobs",
         "summary": "List workspace jobs",
-        "description": "Lists your workspace's jobs. Requires scope `jobs:read` (production keys).",
+        "description": "Lists your workspace's jobs. Requires scope `jobs:read` (eval + production keys).",
         "parameters": [
           {
             "name": "includePaused",
@@ -795,7 +801,7 @@
         ],
         "operationId": "createJob",
         "summary": "Post a job",
-        "description": "Creates a fully configured job from minimal input: skills/tags derived from the JD, screening questionnaire auto-attached, and auto-outreach to matching candidates enabled. After posting, the job is reviewed and then goes live — typically ~30 minutes on business days; matching-candidate outreach starts once approved. Key requirement importance is honoured exactly as sent — we strongly recommend at most 3 `must_have` items (over-tight configs shrink outreach reach).\n\nRequires scope `jobs:write` (production keys). Rate limits: 5 createJob + 120 global requests per 60s per API key.",
+        "description": "Creates a fully configured job from minimal input: skills/tags derived from the JD, screening questionnaire auto-attached, and auto-outreach to matching candidates enabled. After posting, the job is reviewed and then goes live \u2014 typically ~30 minutes on business days; matching-candidate outreach starts once approved. Key requirement importance is honoured exactly as sent \u2014 we strongly recommend at most 3 `must_have` items (over-tight configs shrink outreach reach).\n\nRequires scope `jobs:write` (production keys). Rate limits: 5 createJob + 120 global requests per 60s per API key.",
         "requestBody": {
           "required": true,
           "content": {
@@ -930,7 +936,7 @@
         },
         "responses": {
           "200": {
-            "description": "Job created and submitted for review. Goes live after review — typically ~30 minutes on business days.",
+            "description": "Job created and submitted for review. Goes live after review \u2014 typically ~30 minutes on business days.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1095,7 +1101,7 @@
                   },
                   "reasonText": {
                     "type": "string",
-                    "maxLength": 500
+                    "maxLength": 50000
                   }
                 }
               }
@@ -1156,7 +1162,7 @@
         ],
         "operationId": "inviteToApply",
         "summary": "Invite a candidate to apply",
-        "description": "Invites a candidate to apply to one of your jobs, with your custom message attached. Tip: include an interview booking link so interested candidates can pick a slot directly. One invite per (job, candidate) pair — if already invited or already in the job pipeline, returns 409 already_exists_in_job_pipeline. Replies land in your Cutshort inbox.\n\nRequires scope `messages:write` (production keys). Metered on the workspace messages quota (check GET /usage). Rate limits: 10 inviteToApply + 120 global requests per 60s per API key.",
+        "description": "Invites a candidate to apply to one of your jobs, with your custom message attached. Tip: include an interview booking link so interested candidates can pick a slot directly. One invite per (job, candidate) pair \u2014 if already invited or already in the job pipeline, returns 409 already_exists_in_job_pipeline. Replies land in your Cutshort inbox.\n\nRequires scope `messages:write` (production keys). Metered on the workspace messages quota (check GET /usage). Rate limits: 10 inviteToApply + 120 global requests per 60s per API key.",
         "requestBody": {
           "required": true,
           "content": {
@@ -1256,7 +1262,7 @@
         ],
         "operationId": "getUsage",
         "summary": "API usage meters",
-        "description": "Returns the workspace's cycle usage as used/limit meter pairs for unlocks, searches (structured + AI combined), and candidate messages. `cycleEndsOn` is when usage resets; `planExpiresOn` is when the subscription ends (non-free plans). Check before spending unlocks or messages. No special scope — any valid API key.",
+        "description": "Returns the workspace's cycle usage as used/limit meter pairs for unlocks, searches (structured + AI combined), and candidate messages. `cycleEndsOn` is when usage resets; `planExpiresOn` is when the subscription ends (non-free plans). Check before spending unlocks or messages. No special scope \u2014 any valid API key.",
         "responses": {
           "200": {
             "description": "Usage snapshot",
@@ -1302,7 +1308,7 @@
       "get": {
         "operationId": "listStagesOfJob",
         "summary": "List stages for a job (with application counts)",
-        "description": "Returns the job pipeline stages with applicationCount per stage. Use stageId with GET /jobs/{jobId}/applications to list a specific stage. Requires jobs:read.",
+        "description": "Returns the job pipeline stages with applicationCount per stage. Use stageId with GET /jobs/{jobId}/applications to list a specific stage. Requires scope `jobs:read` (eval + production keys).",
         "parameters": [
           {
             "name": "jobId",

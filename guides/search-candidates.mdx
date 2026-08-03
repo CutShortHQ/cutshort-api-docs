@@ -12,11 +12,10 @@ Each hit includes:
 | Field | Description |
 | --- | --- |
 | `talentCardId` | Stable ID for follow-up API calls — see [Get candidate details](/guides/get-candidate-details) |
-| `headline` | Role / skills summary |
 | `experience` | Total years |
 | `locations` | Desired work locations |
 | `currentLocation`, `currentCompany` | Current placement |
-| `joiningAvailability` | `{ status, noticePeriodEndsOn, canJoinHowSoonDays }` — status is `immediate` / `on_notice_period` / `not_resigned` |
+| `joiningAvailability` | `{ status, noticePeriodEndsOn }` — status is `immediate` / `on_notice_period` / `not_resigned` |
 | `lastSeen` | Last activity on Cutshort (ISO timestamp) |
 | `currentSalary` | Annual INR |
 | `workHistory` | Compact strings, most recent first (max 8) |
@@ -28,7 +27,9 @@ Use `profileSignals` and `redactedResumeText` together to judge fit without cont
 
 ## AI / NLP search
 
-Add `q` (max 500 characters) for semantic ranking:
+At least one search filter is required (`q`, `inresume`, location/experience/salary, profile attributes, or `activity`). Bare pagination-only requests are rejected with `400 search_criteria_required`.
+
+Add `q` (up to 20,000 characters; inputs above 50,000 are rejected) for semantic ranking:
 
 ```
 GET /search/candidates?q=ML engineer with startup pedigree&minexp=3&maxexp=8

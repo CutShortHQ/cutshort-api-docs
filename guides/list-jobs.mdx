@@ -1,0 +1,49 @@
+---
+title: List workspace jobs
+description: Get your active jobs and their IDs for use in search and outreach
+---
+
+`GET /jobs` returns the jobs in your workspace. Use the returned `jobId` to list stages, list applications, invite candidates to apply, or check pipeline counts.
+
+Requires scope `jobs:read` — available to both **eval and production keys**.
+
+## Request
+
+```
+GET /api/v1/jobs
+```
+
+| Parameter | Type | Default | Description |
+| --- | --- | --- | --- |
+| `page` | integer | 1 | Page number |
+| `pageSize` | integer | 10 | Results per page (max 20) |
+| `includePaused` | boolean | false | Set `true` to also return paused jobs. Deleted jobs never appear. |
+
+## Response
+
+```json
+{
+  "results": [
+    {
+      "jobId": "64f1a2b3c4d5e6f7a8b9c0d1",
+      "title": "Senior Backend Engineer",
+      "status": "active",
+      "createdOn": "2026-07-01T10:00:00.000Z"
+    }
+  ],
+  "page": 1,
+  "pageSize": 10,
+  "totalCount": 3
+}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `jobId` | Use this in [Invite to apply](/guides/invite-to-apply), [List stages](/guides/list-stages), and [List applications](/guides/list-applications) |
+| `status` | `active` or `paused` |
+
+## Next steps
+
+- [List stages](/guides/list-stages) — pipeline stages and application counts for a job
+- [List applications](/guides/list-applications) — candidates in a stage
+- [Invite to apply](/guides/invite-to-apply) — send a personalized invite (production keys)
