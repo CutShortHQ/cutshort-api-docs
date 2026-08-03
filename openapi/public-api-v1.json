@@ -3,7 +3,7 @@
   "info": {
     "title": "Cutshort Public API v1",
     "version": "1.0.0",
-    "description": "Programmatic access to Cutshort's tech talent database. All endpoints require `Authorization: Bearer cs_live_<key>`.\n\n**Core flow:** search candidates \u2192 get candidate details (auto-unlock) \u2192 post a job \u2192 message candidates to apply \u2192 list applications (optional: list stages)."
+    "description": "Programmatic access to Cutshort's tech talent database. All endpoints require `Authorization: Bearer cs_live_<key>`.\n\n**Core flow:** search candidates \u2192 get candidate details (auto-unlock) \u2192 post a job \u2192 invite to apply (first contact) \u2192 list applications \u2192 send message (in-thread follow-up)."
   },
   "servers": [
     {
@@ -31,7 +31,7 @@
     },
     {
       "name": "Outreach",
-      "description": "Candidate outreach (invite to apply)"
+      "description": "Candidate outreach: first-contact invite to apply, and in-thread follow-up messages"
     },
     {
       "name": "Usage",
@@ -1162,7 +1162,7 @@
         ],
         "operationId": "inviteToApply",
         "summary": "Invite a candidate to apply",
-        "description": "Invites a candidate to apply to one of your jobs, with your custom message attached. Tip: include an interview booking link so interested candidates can pick a slot directly. One invite per (job, candidate) pair \u2014 if already invited or already in the job pipeline, returns 409 already_exists_in_job_pipeline. Replies land in your Cutshort inbox.\n\nRequires scope `messages:write` (production keys). Metered on the workspace messages quota (check GET /usage). Rate limits: 10 inviteToApply + 120 global requests per 60s per API key.",
+        "description": "FIRST CONTACT only: invites a talent-database / search candidate to apply to one of your jobs, with your custom message. Tip: include an interview booking link so interested candidates can pick a slot. One invite per (job, candidate) pair \u2014 if already invited or already in the job pipeline, returns 409 already_exists_in_job_pipeline; use POST /messages with threadId for follow-ups instead. Replies land in your Cutshort inbox.\n\nRequires scope `messages:write` (production keys). Metered on the workspace messages quota (check GET /usage). Rate limits: 10 inviteToApply + 120 global requests per 60s per API key.",
         "requestBody": {
           "required": true,
           "content": {
@@ -1244,6 +1244,84 @@
           },
           "502": {
             "description": "Upstream invite failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/messages": {
+      "post": {
+        "tags": [
+          "Outreach"
+        ],
+        "operationId": "sendMessage",
+        "summary": "Send a follow-up message in a thread",
+        "description": "Sends a reply in an EXISTING conversation thread (candidates already in the job pipeline). Get threadId from GET /jobs/{jobId}/applications or from the invite-to-apply response when present. This is NOT first-contact outreach \u2014 use POST /invite-to-apply for search candidates not yet in the pipeline.\n\nRequires scope `messages:write` (production keys). Does not consume the invite-to-apply messages quota. Rate limit: global 120 requests per 60s per API key.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "threadId",
+                  "message"
+                ],
+                "properties": {
+                  "threadId": {
+                    "type": "string",
+                    "description": "Conversation thread ID from list applications"
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "Follow-up message text"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Message sent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "threadId": {
+                      "type": "string"
+                    },
+                    "messageId": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Upstream message / thread identifier when returned"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "400": {
+            "description": "Upstream send failed (error_code send_message_failed)",
             "content": {
               "application/json": {
                 "schema": {

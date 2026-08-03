@@ -1,0 +1,73 @@
+---
+title: Send a message
+description: Reply in an existing candidate conversation thread
+---
+
+<Note>
+  Requires a **production key** with the `messages:write` scope. To upgrade from eval access, email [hello@cutshort.io](mailto:hello@cutshort.io). For API support, email [engineering@cutshort.io](mailto:engineering@cutshort.io) from your Cutshort account email.
+</Note>
+
+`POST /messages` sends a **follow-up reply** in an existing Cutshort conversation thread — for candidates who are already in your job pipeline (for example in Applications after an invite or apply).
+
+## When to use this vs invite to apply
+
+| | [`POST /invite-to-apply`](/guides/invite-to-apply) | `POST /messages` (this guide) |
+| --- | --- | --- |
+| **Use for** | First contact from search / talent database | Follow-up in an existing thread |
+| **Needs** | `talentCardId` + `jobId` + `message` | `threadId` + `message` |
+| **If already in pipeline** | **409** `already_exists_in_job_pipeline` | Send here instead |
+| **Quota** | Counts against workspace `messages` meter | Not counted on the invite quota (still needs `messages:write`) |
+
+Get `threadId` from [List applications](/guides/list-applications) (each application row may include `threadId`), or from the invite response when present.
+
+## Request
+
+```
+POST /api/v1/messages
+```
+
+```json
+{
+  "threadId": "64f1a2b3c4d5e6f7a8b9c0d3",
+  "message": "Thanks for applying — are you free for a 20-min intro this week? https://cal.com/acme/intro"
+}
+```
+
+| Field | Required | Notes |
+| --- | --- | --- |
+| `threadId` | Yes | Conversation thread for this job ↔ candidate |
+| `message` | Yes | Plain text reply |
+
+## Response
+
+```json
+{
+  "success": true,
+  "threadId": "64f1a2b3c4d5e6f7a8b9c0d3",
+  "messageId": "…"
+}
+```
+
+## Typical flow
+
+1. [Invite to apply](/guides/invite-to-apply) for first contact
+2. [List applications](/guides/list-applications) to find candidates in Applications and their `threadId`
+3. Send a personalized follow-up with `POST /messages`
+
+```bash
+curl -s -X POST "https://cutshort.io/api/v1/messages" \
+  -H "Authorization: Bearer cs_live_PROD_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "threadId": "THREAD_ID",
+    "message": "Thanks for applying — happy to chat this week…"
+  }'
+```
+
+## Errors
+
+| `error_code` | HTTP | Meaning |
+| --- | --- | --- |
+| `insufficient_scope` | 403 | Key lacks `messages:write` (eval keys cannot send) |
+| `thread_not_in_workspace` | 404 | Unknown thread or not in your workspace |
+| `send_message_failed` | 400 | Upstream send failed — safe to retry once |

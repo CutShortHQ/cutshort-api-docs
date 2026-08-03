@@ -50,6 +50,7 @@ With `autoUnlock=false`, locked applications are omitted — you only get candid
       "applications": [
         {
           "applicationId": "…",
+          "threadId": "…",
           "talentCardId": "…",
           "displayName": "…",
           "email": "…",
@@ -77,8 +78,11 @@ With `autoUnlock=false`, locked applications are omitted — you only get candid
 
 The `stages` array is shaped so multiple stages can be returned later; today it always contains the one requested stage.
 
+`threadId` (when present) is the conversation for [Send a message](/guides/send-message) follow-ups. Do not use [Invite to apply](/guides/invite-to-apply) again for these candidates.
+
 ## Typical flow after outreach
 
-1. [Invite candidates](/guides/invite-to-apply) with invites to apply
+1. [Invite candidates](/guides/invite-to-apply) for first contact
 2. Later: list applications on the job (default stage) to see who applied
-3. Optionally [list stages](/guides/list-stages) if you need counts in other pipeline stages
+3. [Send a message](/guides/send-message) using `threadId` for follow-ups
+4. Optionally [list stages](/guides/list-stages) if you need counts in other pipeline stages

@@ -7,11 +7,21 @@ description: Outreach shortlisted candidates with an invite to apply to your job
   Requires a **production key** with the `messages:write` scope. To upgrade from eval access, email [hello@cutshort.io](mailto:hello@cutshort.io). For API support, email [engineering@cutshort.io](mailto:engineering@cutshort.io) from your Cutshort account email.
 </Note>
 
-`POST /invite-to-apply` sends a candidate an **invite to apply** to one of your jobs, with your custom message. This is the outreach step of the core loop: after searching and shortlisting, close the loop by inviting the best candidates to your posted job.
+`POST /invite-to-apply` sends a candidate an **invite to apply** to one of your jobs, with your custom message. This is **first-contact** outreach in the core loop: after searching and shortlisting, invite the best candidates to your posted job.
 
-The candidate is notified by Cutshort. If they reply or apply, the conversation and application appear in your Cutshort inbox and job pipeline — replies do not come back through the API.
+The candidate is notified by Cutshort. If they reply or apply, the conversation and application appear in your Cutshort inbox and job pipeline.
 
 No unlock is needed — you can invite any candidate found in search using their `talentCardId`.
+
+## When to use this vs send message
+
+| | `POST /invite-to-apply` (this guide) | [`POST /messages`](/guides/send-message) |
+| --- | --- | --- |
+| **Use for** | First contact from search / talent database | Follow-up in an existing thread |
+| **Needs** | `talentCardId` + `jobId` + `message` | `threadId` + `message` |
+| **If already in pipeline** | **409** — do not retry; use send message | Correct tool for replies |
+
+After inviting, [list applications](/guides/list-applications) for `threadId`s, then [send a message](/guides/send-message) for follow-ups.
 
 ## Request
 
@@ -46,8 +56,6 @@ POST /api/v1/invite-to-apply
 ## One invite per candidate per job
 
 Each (job, candidate) pair can receive **one** invite. If they were already invited **or** already exist in that job’s pipeline, a second attempt returns **409** `already_exists_in_job_pipeline`. To reach the same candidate about a different role, use that role's `jobId`.
-
-After inviting, [list applications](/guides/list-applications) anytime to see who is in the job’s Applications stage.
 
 ## Limits
 

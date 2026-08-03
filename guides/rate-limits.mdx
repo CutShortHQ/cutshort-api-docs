@@ -41,7 +41,7 @@ Workspace-level running totals, reset each usage cycle. Defaults (production wor
 | --- | --- | --- | --- |
 | `apiUnlocks` | 10 | `GET /candidates/{id}` on a **locked** candidate (auto-unlock) | `api_unlock_limit_reached` |
 | `searches` | 100 | `GET /search/candidates` (each page request) | `api_search_limit_reached` |
-| `messages` | 20 | `POST /invite-to-apply` | `api_message_limit_reached` |
+| `messages` | 20 | `POST /invite-to-apply` only (not `POST /messages` follow-ups) | `api_message_limit_reached` |
 
 Quota errors are also HTTP **429**, but retrying does not help — the meter resets at `cycleEndsOn`, or contact Cutshort for a higher grant.
 

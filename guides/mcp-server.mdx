@@ -62,8 +62,8 @@ npx mcp-remote https://mcp.cutshort.io/mcp \
 | | Eval key | Production key |
 | --- | --- | --- |
 | Search & candidate detail | Yes (small quotas) | Yes |
-| Post jobs, invite to apply, delete jobs | No | Yes |
-| Typical use | Try MCP before buying | Full sourcing → outreach loop |
+| Post jobs, invite / send message, delete jobs | No | Yes |
+| Typical use | Try MCP before buying | Full sourcing → outreach → follow-up loop |
 
 Tool registration is scope-aware: the server reads `GET /capabilities` at connect time and only exposes tools your key can use.
 
@@ -78,8 +78,18 @@ Tool registration is scope-aware: the server reads `GET /capabilities` at connec
 | `list_jobs` | ✓ | ✓ | |
 | `list_applications` | ✓ | ✓ | Applications stage; `autoUnlock` defaults to true |
 | `post_job` | — | ✓ | Reviewed then live (~30 min on business days) |
-| `invite_to_apply` | — | ✓ | Invite shortlisted candidates — confirm first |
+| `invite_to_apply` | — | ✓ | **First contact** invite — confirm first |
+| `send_message` | — | ✓ | **Follow-up** in an existing thread (`threadId` from `list_applications`) — confirm first |
 | `delete_job` | — | ✓ | Soft-delete — confirm first |
+
+### Messaging guidance
+
+| Tool | Use when |
+| --- | --- |
+| `invite_to_apply` | Candidate is from search / talent DB and **not** yet in that job’s pipeline |
+| `send_message` | Candidate already has a conversation (`threadId` from `list_applications` or invite response) |
+
+Do not call `invite_to_apply` again for someone already invited or already in Applications — that returns **409**. Use `send_message` instead.
 
 Pipeline stage moves are **not** in MCP — use the Cutshort website or the REST API for that.
 
@@ -93,13 +103,13 @@ Try this after connecting:
 
 > I'm hiring a senior backend engineer in Bangalore, 4–8 years, strong on Go and Kubernetes, 25–45 LPA. Search Cutshort and show me the top matches with headline, experience, and a short fit reason from the resume text.
 
-With a **production key**, you can extend the flow: post a job, invite shortlisted candidates to apply, then `list_applications` to see who responded. See [Invite to apply](/guides/invite-to-apply) and [List applications](/guides/list-applications).
+With a **production key**, you can extend the flow: post a job → `invite_to_apply` → `list_applications` → `send_message` for follow-ups. See [Invite to apply](/guides/invite-to-apply), [Send a message](/guides/send-message), and [List applications](/guides/list-applications).
 
 ## Security
 
 - Treat API keys like passwords — do not commit them or paste them in public chats.
 - `get_searched_candidate` auto-unlocks locked candidates (1 credit each).
-- Write tools (`post_job`, `invite_to_apply`, `delete_job`) instruct agents to confirm with you before calling.
+- Write tools (`post_job`, `invite_to_apply`, `send_message`, `delete_job`) instruct agents to confirm with you before calling.
 
 ## Support
 

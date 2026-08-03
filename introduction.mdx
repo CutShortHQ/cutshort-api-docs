@@ -15,12 +15,13 @@ Prefer an AI agent in Claude or Cursor? Connect the Cutshort MCP server with you
 | [`GET /candidates/{talentCardId}`](/api-reference/candidates/get-candidate-detail-auto-unlock) | Full candidate detail — **auto-unlocks** locked candidates (spends one credit) |
 | [`GET /jobs`](/guides/list-jobs) | List your workspace's jobs |
 | [`POST /jobs`](/api-reference/jobs/post-a-job) | Post a job with auto-configured pipeline and outreach |
-| [`POST /invite-to-apply`](/api-reference/outreach/invite-a-candidate-to-apply) | Invite a candidate to apply to your job, with a custom message |
+| [`POST /invite-to-apply`](/api-reference/outreach/invite-a-candidate-to-apply) | **First contact** — invite a search candidate to apply |
+| [`POST /messages`](/guides/send-message) | **Follow-up** — reply in an existing conversation thread |
 | [`GET /jobs/{jobId}/stages`](/guides/list-stages) | Pipeline stages with application counts |
-| [`GET /jobs/{jobId}/applications`](/guides/list-applications) | Applications in a stage (default: Applications) |
+| [`GET /jobs/{jobId}/applications`](/guides/list-applications) | Applications in a stage (default: Applications); includes `threadId` |
 | [`GET /usage`](/api-reference/usage/api-usage-meters) | Usage meters — `used`/`limit` for unlocks, searches, messages |
 
-**The core loop:** search candidates → get details for your shortlist (auto-unlock) → post a job → invite candidates to apply → list applications later.
+**The core loop:** search candidates → get details for your shortlist (auto-unlock) → post a job → invite to apply → list applications → send follow-ups in-thread.
 
 ## Base URL
 
@@ -76,7 +77,10 @@ For API questions, integration help, or quota issues, email **[engineering@cutsh
     Contact info, resume file, and auto-unlock credits
   </Card>
   <Card title="Invite to apply" icon="paper-plane" href="/guides/invite-to-apply">
-    Invite shortlisted candidates to apply to your job
+    First-contact invite for shortlisted search candidates
+  </Card>
+  <Card title="Send a message" icon="comments" href="/guides/send-message">
+    Follow-up reply in an existing conversation thread
   </Card>
   <Card title="MCP Server" icon="robot" href="/guides/mcp-server">
     Connect Claude or Cursor to Cutshort
