@@ -11,14 +11,14 @@ Prefer an AI agent in Claude or Cursor? Connect the Cutshort MCP server with you
 
 | Endpoint | Purpose |
 | --- | --- |
-| [`GET /search/candidates`](/api-reference/search/search-candidates) | **Primary** — structured + AI search, 10 results per page |
-| [`GET /candidates/{talentCardId}`](/api-reference/candidates/get-candidate-detail) | Full candidate detail — **auto-unlocks** locked candidates (spends one credit) |
+| [`GET /search/candidates`](/api-reference/search/search-talent-database) | **Primary** — structured + AI search, 10 results per page |
+| [`GET /candidates/{talentCardId}`](/api-reference/candidates/get-candidate-detail-auto-unlock) | Full candidate detail — **auto-unlocks** locked candidates (spends one credit) |
 | [`GET /jobs`](/guides/list-jobs) | List your workspace's jobs |
-| [`POST /jobs`](/api-reference/jobs/create-job) | Post a job with auto-configured pipeline and outreach |
-| [`POST /invite-to-apply`](/api-reference/outreach/invite-to-apply) | Invite a candidate to apply to your job, with a custom message |
+| [`POST /jobs`](/api-reference/jobs/post-a-job) | Post a job with auto-configured pipeline and outreach |
+| [`POST /invite-to-apply`](/api-reference/outreach/invite-a-candidate-to-apply) | Invite a candidate to apply to your job, with a custom message |
 | [`GET /jobs/{jobId}/stages`](/guides/list-stages) | Pipeline stages with application counts |
 | [`GET /jobs/{jobId}/applications`](/guides/list-applications) | Applications in a stage (default: Applications) |
-| [`GET /usage`](/api-reference/usage/get-usage) | Usage meters — `used`/`limit` for unlocks, searches, messages |
+| [`GET /usage`](/api-reference/usage/api-usage-meters) | Usage meters — `used`/`limit` for unlocks, searches, messages |
 
 **The core loop:** search candidates → get details for your shortlist (auto-unlock) → post a job → invite candidates to apply → list applications later.
 
