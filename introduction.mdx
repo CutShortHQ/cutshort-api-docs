@@ -19,9 +19,10 @@ Prefer an AI agent in Claude or Cursor? Connect the Cutshort MCP server with you
 | [`POST /messages`](/guides/send-message) | **Follow-up** — reply in an existing conversation thread |
 | [`GET /jobs/{jobId}/stages`](/guides/list-stages) | Pipeline stages with application counts |
 | [`GET /jobs/{jobId}/applications`](/guides/list-applications) | Applications in a stage (default: Applications); includes `threadId` |
+| [`POST /applications/{id}/move-stage`](/guides/move-application-stage) | Move an application to another pipeline stage |
 | [`GET /usage`](/api-reference/usage/api-usage-meters) | Usage meters — `used`/`limit` for unlocks, searches, messages |
 
-**The core loop:** search candidates → get details for your shortlist (auto-unlock) → post a job → invite to apply → list applications → send follow-ups in-thread.
+**The core loop:** search candidates → get details for your shortlist (auto-unlock) → post a job → invite to apply → list applications → send follow-ups / move stages.
 
 ## Base URL
 

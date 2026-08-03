@@ -76,10 +76,12 @@ Tool registration is scope-aware: the server reads `GET /capabilities` at connec
 | `search_candidates` | ✓ | ✓ | Full filter control — see [Search guide](/guides/search-candidates) |
 | `get_searched_candidate` | ✓ | ✓ | Auto-unlocks (1 credit) — confirm before bulk fetch |
 | `list_jobs` | ✓ | ✓ | |
-| `list_applications` | ✓ | ✓ | Applications stage; `autoUnlock` defaults to true |
+| `list_applications` | ✓ | ✓ | Default Applications stage; optional `stageId`; `autoUnlock` defaults to true |
+| `get_job_stages` | ✓ | ✓ | Pipeline stages + counts — source of `stageId` |
 | `post_job` | — | ✓ | Reviewed then live (~30 min on business days) |
 | `invite_to_apply` | — | ✓ | **First contact** invite — confirm first |
 | `send_message` | — | ✓ | **Follow-up** in an existing thread (`threadId` from `list_applications`) — confirm first |
+| `move_application_stage` | — | ✓ | Move application to another stage — confirm first |
 | `delete_job` | — | ✓ | Soft-delete — confirm first |
 
 ### Messaging guidance
@@ -91,7 +93,14 @@ Tool registration is scope-aware: the server reads `GET /capabilities` at connec
 
 Do not call `invite_to_apply` again for someone already invited or already in Applications — that returns **409**. Use `send_message` instead.
 
-Pipeline stage moves are **not** in MCP — use the Cutshort website or the REST API for that.
+### Pipeline guidance
+
+| Tool | Use when |
+| --- | --- |
+| `get_job_stages` | You need `stageId`s / counts across the pipeline |
+| `move_application_stage` | Move a candidate after confirming with the human |
+
+From **Applications**, only Shortlisted or Rejected are valid targets (`invalid_stage_move` otherwise). See [Move application stage](/guides/move-application-stage).
 
 ### Agent resource
 
@@ -103,13 +112,13 @@ Try this after connecting:
 
 > I'm hiring a senior backend engineer in Bangalore, 4–8 years, strong on Go and Kubernetes, 25–45 LPA. Search Cutshort and show me the top matches with headline, experience, and a short fit reason from the resume text.
 
-With a **production key**, you can extend the flow: post a job → `invite_to_apply` → `list_applications` → `send_message` for follow-ups. See [Invite to apply](/guides/invite-to-apply), [Send a message](/guides/send-message), and [List applications](/guides/list-applications).
+With a **production key**, you can extend the flow: post a job → `invite_to_apply` → `list_applications` → `send_message` / `move_application_stage`. See [Invite to apply](/guides/invite-to-apply), [Send a message](/guides/send-message), [Move application stage](/guides/move-application-stage), and [List applications](/guides/list-applications).
 
 ## Security
 
 - Treat API keys like passwords — do not commit them or paste them in public chats.
 - `get_searched_candidate` auto-unlocks locked candidates (1 credit each).
-- Write tools (`post_job`, `invite_to_apply`, `send_message`, `delete_job`) instruct agents to confirm with you before calling.
+- Write tools (`post_job`, `invite_to_apply`, `send_message`, `move_application_stage`, `delete_job`) instruct agents to confirm with you before calling.
 
 ## Support
 

@@ -21,7 +21,11 @@
       "display": "interactive"
     },
     "examples": {
-      "languages": ["curl", "python", "javascript"],
+      "languages": [
+        "curl",
+        "python",
+        "javascript"
+      ],
       "defaults": "required"
     }
   },
@@ -32,7 +36,11 @@
         "groups": [
           {
             "group": "Getting started",
-            "pages": ["introduction", "authentication", "quickstart"]
+            "pages": [
+              "introduction",
+              "authentication",
+              "quickstart"
+            ]
           },
           {
             "group": "Guides",
@@ -47,6 +55,7 @@
               "guides/send-message",
               "guides/list-stages",
               "guides/list-applications",
+              "guides/move-application-stage",
               "guides/rate-limits"
             ]
           }
@@ -54,7 +63,9 @@
       },
       {
         "tab": "MCP Server",
-        "pages": ["guides/mcp-server"]
+        "pages": [
+          "guides/mcp-server"
+        ]
       },
       {
         "tab": "API Reference",

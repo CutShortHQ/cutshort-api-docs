@@ -1,0 +1,74 @@
+---
+title: Move application stage
+description: Move a candidate to another pipeline stage
+---
+
+<Note>
+  Requires a **production key** with the `stages:write` scope. To upgrade from eval access, email [hello@cutshort.io](mailto:hello@cutshort.io). For API support, email [engineering@cutshort.io](mailto:engineering@cutshort.io) from your Cutshort account email.
+</Note>
+
+`POST /applications/{applicationId}/move-stage` moves one application to a different hiring pipeline stage for the same job.
+
+## When to use
+
+1. [List applications](/guides/list-applications) to get `applicationId`
+2. [List stages](/guides/list-stages) to get the target `stageId`
+3. Move the application (confirm first — stage changes can trigger ATS automations)
+
+## Applications-stage rule
+
+From the **Applications** inbox (`type: candidates`), you can only move to:
+
+| Target stage type | Typical title | Effect |
+| --- | --- | --- |
+| `connected` | Shortlisted | Same as UI shortlist |
+| `rejected` | Rejected | Same as UI reject |
+
+Any other target from Applications returns **400** `invalid_stage_move`. From other stages, you can move by `stageId` directly.
+
+## Request
+
+```
+POST /api/v1/applications/{applicationId}/move-stage
+```
+
+```json
+{
+  "stageId": "64f1a2b3c4d5e6f7a8b9c0d4"
+}
+```
+
+| Field | Required | Notes |
+| --- | --- | --- |
+| `stageId` | Yes | From [List stages](/guides/list-stages) for the same job |
+
+## Response
+
+```json
+{
+  "success": true,
+  "applicationId": "…",
+  "movedToStage": {
+    "stageId": "…",
+    "title": "Shortlisted",
+    "type": "connected"
+  },
+  "taskId": null
+}
+```
+
+```bash
+curl -s -X POST "https://cutshort.io/api/v1/applications/APPLICATION_ID/move-stage" \
+  -H "Authorization: Bearer cs_live_PROD_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "stageId": "STAGE_ID" }'
+```
+
+## Errors
+
+| `error_code` | HTTP | Meaning |
+| --- | --- | --- |
+| `insufficient_scope` | 403 | Key lacks `stages:write` |
+| `application_not_found` | 404 | Unknown application |
+| `stage_not_found_for_job` | 404 | `stageId` not on this job |
+| `invalid_stage_move` | 400 | Illegal move (e.g. Applications → Interview without shortlist/reject) |

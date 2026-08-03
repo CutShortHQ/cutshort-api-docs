@@ -43,7 +43,7 @@
     },
     {
       "name": "Applications",
-      "description": "List applications in a job stage"
+      "description": "List applications and move them between pipeline stages"
     }
   ],
   "components": {
@@ -1329,6 +1329,102 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/applications/{applicationId}/move-stage": {
+      "post": {
+        "tags": [
+          "Applications"
+        ],
+        "operationId": "moveApplicationStage",
+        "summary": "Move an application to another stage",
+        "description": "Moves one application to a different pipeline stage on the same job. Get applicationId from GET /jobs/{jobId}/applications and stageId from GET /jobs/{jobId}/stages. From the Applications stage (type candidates), only Shortlisted (connected) or Rejected are valid \u2014 other targets return 400 invalid_stage_move.\n\nRequires scope `stages:write` (production keys).",
+        "parameters": [
+          {
+            "name": "applicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "stageId"
+                ],
+                "properties": {
+                  "stageId": {
+                    "type": "string",
+                    "description": "Target stage ID from list stages"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Application moved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "applicationId": {
+                      "type": "string"
+                    },
+                    "movedToStage": {
+                      "type": "object",
+                      "properties": {
+                        "stageId": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "taskId": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid stage move (error_code invalid_stage_move)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
           }
         }
       }
