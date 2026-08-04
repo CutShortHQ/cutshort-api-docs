@@ -17,7 +17,7 @@ GET /api/v1/jobs/{jobId}/applications?fitment=strong,fair&autoUnlock=true&page=1
 | --- | --- | --- |
 | `stageId` | Applications stage | From [List stages](/guides/list-stages). Omit to use the applications stage. |
 | `fitment` | `strong,fair` | Comma-separated: `strong`, `fair`, `weak`. Rows with no AI fitment verdict are always included. |
-| `autoUnlock` | `true` | Unlock locked candidates on the page (spends unlock credits). `false` returns **only already-unlocked** applications. |
+| `autoUnlock` | `true` | Unlock locked candidates on the page. Upstream unlock always runs; **API unlock quota applies only on the sent stage**. `false` returns **only already-unlocked** applications. |
 | `sort` | `relevance` | `relevance` or `recency` |
 | `page` / `pageSize` | `1` / `10` | Max pageSize 20 |
 
@@ -33,9 +33,9 @@ Default `strong,fair` excludes weak / not-a-fit.
 
 ### Auto-unlock
 
-With `autoUnlock=true` (default), every locked candidate on the **returned page** is unlocked first (same metering as [Get candidate details](/guides/get-candidate-details)). If remaining unlock quota is less than the number of locked candidates on that page, the call returns **429** `api_unlock_limit_reached` and unlocks nothing.
+With `autoUnlock=true` (default), every locked candidate on the **returned page** is unlocked first. Unlocks always run upstream (plan credits, download counts, events). **Only the sent stage** counts against the workspace API unlock quota — same preflight as [Get candidate details](/guides/get-candidate-details) when listing sent. If remaining API unlock quota is less than the number of locked candidates on that page, the call returns **429** `api_unlock_limit_reached` and unlocks nothing.
 
-With `autoUnlock=false`, locked applications are omitted — you only get candidates already unlocked for your workspace. No unlock credits are spent.
+With `autoUnlock=false`, locked applications are omitted — you only get candidates already unlocked for your workspace. No unlocks are attempted.
 
 ## Response
 

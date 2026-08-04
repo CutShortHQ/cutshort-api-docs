@@ -1558,7 +1558,7 @@
       "get": {
         "operationId": "listApplicationsOfJob",
         "summary": "List applications in a job stage",
-        "description": "Lists applications for one stage (default: applications / candidates). Fitment filter default strong,fair (excludes weak/not_a_fit); pass fitment=strong or fitment=strong,fair,weak. autoUnlock default true unlocks locked candidates on the page (metered); autoUnlock=false returns only already-unlocked applications. Requires applications:read.",
+        "description": "Lists applications for one stage (default: applications / candidates). Fitment filter default strong,fair (excludes weak/not_a_fit); pass fitment=strong or fitment=strong,fair,weak. autoUnlock default true unlocks locked candidates on the page; autoUnlock=false returns only already-unlocked applications. Unlocks always run upstream (plan credits, download counts, events); only the sent stage counts against the workspace API unlock quota. Requires applications:read.",
         "parameters": [
           {
             "name": "jobId",
@@ -1592,7 +1592,7 @@
               "type": "boolean",
               "default": true
             },
-            "description": "Default true: unlock locked candidates on the page. false: omit locked applications."
+            "description": "Default true: unlock locked candidates on the page. false: omit locked applications. API unlock quota applies only for the sent stage."
           },
           {
             "name": "sort",

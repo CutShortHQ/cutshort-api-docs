@@ -86,7 +86,7 @@ Tool registration is scope-aware: the server reads `GET /capabilities` at connec
 | `search_candidates` | ✓ | ✓ | Full filter control — see [Search guide](/guides/search-candidates) |
 | `get_searched_candidate` | ✓ | ✓ | Auto-unlocks (1 credit) — confirm before bulk fetch |
 | `list_jobs` | ✓ | ✓ | |
-| `list_applications` | ✓ | ✓ | Default Applications stage; optional `stageId`; `autoUnlock` defaults to true |
+| `list_applications` | ✓ | ✓ | Default Applications stage; optional `stageId`; `autoUnlock` defaults to true (only sent stage is API-metered) |
 | `get_job_stages` | ✓ | ✓ | Pipeline stages + counts — source of `stageId` |
 | `post_job` | — | ✓ | Reviewed then live (~30 min on business days) |
 | `invite_to_apply` | — | ✓ | **First contact** invite — confirm first |
