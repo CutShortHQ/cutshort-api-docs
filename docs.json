@@ -3,10 +3,19 @@
   "name": "Cutshort API",
   "description": "Search India's tech talent database programmatically.",
   "theme": "mint",
+  "logo": {
+    "light": "/logo/light.png",
+    "dark": "/logo/dark.svg",
+    "href": "https://cutshort.io"
+  },
+  "favicon": "/favicon.png",
+  "fonts": {
+    "family": "Inter"
+  },
   "colors": {
-    "primary": "#2D6A4F",
-    "light": "#40916C",
-    "dark": "#1B4332"
+    "primary": "#5851D3",
+    "light": "#7B75E0",
+    "dark": "#4540A8"
   },
   "background": {
     "decoration": "grid",
@@ -87,7 +96,11 @@
   },
   "footer": {
     "socials": {
-      "website": "https://cutshort.io"
+      "website": "https://cutshort.io",
+      "linkedin": "https://www.linkedin.com/company/cutshort",
+      "x": "https://x.com/CutShortHQ",
+      "instagram": "https://www.instagram.com/cutshorthq/",
+      "facebook": "https://www.facebook.com/cutshorthq/"
     }
   }
 }
